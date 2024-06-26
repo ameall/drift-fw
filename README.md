@@ -5,6 +5,7 @@ Firmware repo for DRIFT Capstone Project
 [TO DO]
 
 ## Branch Structure:
+```
 . main
 |───production  # contains latest working copy of firmware code
 |   |
@@ -14,3 +15,4 @@ Firmware repo for DRIFT Capstone Project
 |───testing     # contains most-up-to-date version of testing code
 |
 └───README.md   # this file!
+```
