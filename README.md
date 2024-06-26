@@ -4,15 +4,13 @@ Firmware repo for DRIFT Capstone Project
 ## Firmware Overview
 [TO DO]
 
-## Branch Structure:
+## Directory Structure:
 ```
-. main
-|───production  # contains latest working copy of firmware code
+.
+|───src     # Contains all firmware code
 |   |
-|   |───{directory}     # TBD
-|   └───{directory}     # TBD
-|
-|───testing     # contains most-up-to-date version of testing code
+|   |───prod     # Contains latest version of tested code
+|   └───dev     # Contains latest version of untested code
 |
 └───README.md   # this file!
 ```
