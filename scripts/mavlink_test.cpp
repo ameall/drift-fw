@@ -1,44 +1,44 @@
-#include <cstdlib>
-#include <mavsdk/connection_result.h>
 #include <mavsdk/mavsdk.h>
-#include <mavsdk/plugins/telemetry/telemetry.h>
-#include <mavsdk/plugins/action/action.h>
 #include <iostream>
 #include <chrono>
-#include <mavsdk/system.h>
-#include <memory>
-#include <ostream>
-#include <string>
 #include <thread>
 
-void handle_connection_error(mavsdk::ConnectionResult result)
-{
-    if (result != mavsdk::ConnectionResult::Success) {
-        std::cerr << "Connection failed: " << std::endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void handle_action_result(mavsdk::Action::Result result)
-{
-    if (result != mavsdk::Action::Result::Success) {
-        std::cerr << "Action failed" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-int main()
-{
+int main(int argc, char** argv) {
     mavsdk::Mavsdk mavsdk;
 
-    const std::string connection_url = "serial://dev/ttyAMA0::57600";
-    mavsdk::ConnectionResult connectcion_result = mavsdk.add_any_connection(connection_url);
-    handle_connection_error(connectcion_result);
-
-    std::cout << "Waiting for system discovery..." << std::endl;
-    while (mavsdk.systems().empty()) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Connection string (e.g., "udp://:14540" for PX4 SITL)
+    std::string connection_url = "udp://:14540";
+    if (argc == 2) {
+        connection_url = argv[1];
     }
-    std::shared_ptr<mavsdk::System> system = mavsdk.systems().at(0);
-    std::cout << "System connected!" << std::endl;
+
+    // Add connection 
+    mavsdk::ConnectionResult connection_result = mavsdk.add_any_connection(connection_url);
+    if (connection_result != mavsdk::ConnectionResult::Success) {
+        std::cerr << "Connection failed: " << connection_result << std::endl;
+        return 1;
+    }
+
+    // Wait for system to connect
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    // Check if any systems are connected
+    if (mavsdk.systems().size() == 0) {
+        std::cerr << "No systems connected." << std::endl;
+        return 1;
+    }
+
+    // Get the first connected system
+    auto system = mavsdk.systems()[0];
+
+    // Check if the system is connected
+    if (!system->is_connected()) {
+        std::cerr << "System is not connected." << std::endl;
+        return 1;
+    }
+
+    // Print connection success message
+    std::cout << "Connected to system with UUID: " << system->get_uuid() << std::endl;
+
+    return 0;
 }
