@@ -1,6 +1,6 @@
 ---
-name: Issue Template
-about: General template for issues
+name: Feature Name
+about: Suggest an idea for this project
 title: "[<Category>] - <Feature/Issue>"
 labels: ''
 assignees: ''
