@@ -1,0 +1,3 @@
+[submodule "src/tracking"]
+	path = src/tracking
+	url = git@github.com:jlevis10/drift-tracking.git
