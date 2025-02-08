@@ -18,10 +18,12 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 add_compile_options(
     -lcamera
+    -ljpeg
 )
 
 # Use PkgConfig to link libcamera
 find_package(PkgConfig REQUIRED)
+find_package(JPEG REQUIRED)
 
 # Import libcamera libraries
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
@@ -32,8 +34,10 @@ message(STATUS "    Include Path: ${LIBCAMERA_INCLUDE_DIRS}")
 
 # Add source files
 add_executable(drift-camera
-    ./src/camera.cpp
     ./src/drift_camera_main.cpp
+    ./src/camera.cpp
+    ./src/frame_buffer.cpp
+    ./src/logging.cpp
 )
 
 # Necesssary includes
@@ -41,6 +45,23 @@ target_include_directories(drift-camera PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     ${CMAKE_SOURCE_DIR}
     ${LIBCAMERA_INCLUDE_DIRS}
+    ${JPEG_INCLUDE_DIRS}
 )
 
 target_link_libraries(drift-camera PkgConfig::LIBCAMERA)
+target_link_libraries(drift-camera ${JPEG_LIBRARIES})
+
+# Add source files
+add_executable(test-script
+    ../../scripts/camera_test.cpp
+)
+
+# Necesssary includes
+target_include_directories(test-script PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    ${CMAKE_SOURCE_DIR}
+    ${LIBCAMERA_INCLUDE_DIRS}
+)
+
+target_link_libraries(test-script PkgConfig::LIBCAMERA)
+target_link_libraries(test-script ${JPEG_LIBRARIES})
