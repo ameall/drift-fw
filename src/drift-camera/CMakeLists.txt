@@ -32,8 +32,9 @@ message(STATUS "    Include Path: ${LIBCAMERA_INCLUDE_DIRS}")
 
 # Add source files
 add_executable(drift-camera
-    ./src/camera.cpp
     ./src/drift_camera_main.cpp
+    ./src/camera.cpp
+    ./src/frame_buffer.cpp
 )
 
 # Necesssary includes
@@ -44,3 +45,17 @@ target_include_directories(drift-camera PRIVATE
 )
 
 target_link_libraries(drift-camera PkgConfig::LIBCAMERA)
+
+# Add source files
+add_executable(test-script
+    ../../scripts/camera_test.cpp
+)
+
+# Necesssary includes
+target_include_directories(test-script PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    ${CMAKE_SOURCE_DIR}
+    ${LIBCAMERA_INCLUDE_DIRS}
+)
+
+target_link_libraries(test-script PkgConfig::LIBCAMERA)
