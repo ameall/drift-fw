@@ -1,3 +1,6 @@
 .DS_STORE
 .DS_STORE
 __MACOSX
+
+build
+.cache
