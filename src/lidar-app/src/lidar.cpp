@@ -3,19 +3,16 @@
  * @brief Lidar class for DRIFT Drone
  */
 
-#pragma once
-
-#include "lidar.hpp"
-
-/// @cond
 #include <cstdint>
 #include <fcntl.h>
 #include <iterator>
 #include <termios.h>
 #include <unistd.h>
-/// @endcond
+
+#include "lidar.hpp"
 
 constexpr uint8_t NUM_BITS_PER_BYTE = 8u;
+constexpr uint16_t BAUD_RATE = B115200;
 constexpr uint8_t FRAME_HEADER_VALID_BYTE = 0x59;
 
 Lidar::Lidar(const std::string &port) : port_name(port) {};
@@ -34,8 +31,8 @@ bool Lidar::open_serial()
         return false;
     }
 
-    cfsetospeed(&tty, B115200);
-    cfsetispeed(&tty, B115200);
+    cfsetospeed(&tty, BAUD_RATE);
+    cfsetispeed(&tty, BAUD_RATE);
 
     tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;   // 8-bit characters
     tty.c_iflag &= ~IGNBRK;                       // disable break processing
@@ -45,8 +42,8 @@ bool Lidar::open_serial()
     tty.c_cc[VTIME] = 1;                          // 0.1 seconds read timeout
 
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
-    tty.c_cflag |= (CLOCAL | CREAD);     // ignore modem controls and enable reading
-    tty.c_cflag &= ~(PARENB | PARODD);   // shut off parity
+    tty.c_cflag |= (CLOCAL | CREAD);        // ignore modem controls and enable reading
+    tty.c_cflag &= ~(PARENB | PARODD);      // shut off parity
     tty.c_cflag &= ~CSTOPB;
     tty.c_cflag &= ~CRTSCTS;
 
@@ -62,12 +59,14 @@ uint16_t Lidar::get_distance()
 {
     if (serial_port == -1) {
         fprintf(stderr, "Lidar::get_distance(): Serial port not open\n");
-        return -1;
+        return 0;
     }
 
     ssize_t bytes_read = read(serial_port, lidar_reading, std::size(lidar_reading));
 
-    bool valid_reading = bytes_read == LIDAR_PACKAGE_SIZE && lidar_reading[0] == FRAME_HEADER_VALID_BYTE && lidar_reading[1] == FRAME_HEADER_VALID_BYTE;
+    bool valid_reading = bytes_read == LIDAR_PACKAGE_SIZE
+                         && lidar_reading[0] == FRAME_HEADER_VALID_BYTE
+                         && lidar_reading[1] == FRAME_HEADER_VALID_BYTE;
     if (!valid_reading) {
         fprintf(stderr, "Lidar::get_distance(): Invalid reading from the LiDAR sensor\n");
         return 0;
@@ -78,7 +77,9 @@ uint16_t Lidar::get_distance()
 
 void Lidar::close_serial()
 {
-    if (serial_port == -1) {
-        fprintf(stderr, "Lidar::close_serial(): Serial port is already closed\n");
+    if (serial_port == INVALID_SERIAL_PORT) {
+        fprintf(stdout, "Lidar::close_serial(): Serial port is already closed\n");
     }
+
+    close(serial_port);
 }
