@@ -1,6 +1,7 @@
 /**
  * @file frame_buffer.hpp
- * @brief 
+ * @brief Responsible for managing memory associated with sending requests for
+ *      and receiving frames from the camera
  */
 
 #pragma once
@@ -9,6 +10,7 @@
 #include <memory>
 
 #include "camera.hpp"
+#include "model.hpp"
 
 /**
  * @class FrameManager

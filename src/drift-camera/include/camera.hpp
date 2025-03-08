@@ -42,14 +42,14 @@ class Camera {
      * @return true if camera is able to be configured with given parameters
      * @return false if camera is unable to be configured with given parameters
      */
-    bool change_config(uint16_t width, uint16_t height);
+    bool change_config(const uint16_t width, const uint16_t height);
 
     /**
      * @brief Gets the actual camera device object
      *
      * @return libcamera Camera object representing the camera
      */
-    std::shared_ptr<libcamera::Camera> get_camera();
+    std::shared_ptr<libcamera::Camera> get_camera() const;
 
     /**
      * @brief Gets the current configuration of the camera device object
@@ -57,12 +57,12 @@ class Camera {
      * @return libcamera CameraConfiguration object containing the camera
      *      configuration
      */
-    std::shared_ptr<libcamera::CameraConfiguration> get_config();
+    std::shared_ptr<libcamera::CameraConfiguration> get_config() const;
 
     /**
      * @brief Prints all found camera devices
      */
-    void print_cameras();
+    void print_cameras() const;
 
   private:
     /**
