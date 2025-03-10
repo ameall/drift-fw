@@ -70,7 +70,7 @@ class DroneController:
         self.prev_y_error = y_error
         self.prev_z_error = z_error
 
-        return vel_x, vel_y, vel_z
+        return vel_z, vel_x, vel_y, 0 
 
 # Example usage
 controller = DroneController()

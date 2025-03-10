@@ -6,16 +6,12 @@ import asyncio
 
 from mavsdk import System
 from mavsdk.offboard import (OffboardError, VelocityNedYaw)
-from src.flight_control_app.drone_controller import DroneController
-from src.flight_control_app.pixel_displacement_simulator import CameraAppSimulator
 
 
 async def run():
     """ Does Offboard control using velocity NED coordinates. """
 
     drone = System()
-    controller = DroneController()
-    simulator = CameraAppSimulator()
 #   use system address serial port for actual drone
     await drone.connect(system_address="udp://:14540")
 
@@ -50,53 +46,46 @@ async def run():
         print("-- Landing")
         await drone.action.land()
         return
-    
-    while(True):
 
-        x, y, z = simulator.run()
-        fwd, up, right, _ = controller.compute_velocity(x,y,z)
-        await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, up, right, _))
+    print("-- Go up 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, -1.0, 0.0))
+    await asyncio.sleep(4)
 
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
 
-    # print("-- Go up 1 m/s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, -1.0, 0.0))
-    # await asyncio.sleep(4)
+    print("-- Go North 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(1.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(6)
 
-    # print("-- Hold position for 2s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(2)
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
 
-    # print("-- Go North 1 m/s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(1.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(6)
+    print("-- Go West 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, -1.0, 0.0, 0.0))
+    await asyncio.sleep(6)
 
-    # print("-- Hold position for 2s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(2)
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
 
-    # print("-- Go West 1 m/s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, -1.0, 0.0, 0.0))
-    # await asyncio.sleep(6)
+    print("-- Go South 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(-1.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(6)
 
-    # print("-- Hold position for 2s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(2)
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
 
-    # print("-- Go South 1 m/s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(-1.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(6)
+    print("-- Go East 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 1.0, 0.0, 0.0))
+    await asyncio.sleep(6)
 
-    # print("-- Hold position for 2s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(2)
-
-    # print("-- Go East 1 m/s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 1.0, 0.0, 0.0))
-    # await asyncio.sleep(6)
-
-    # print("-- Hold position for 2s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(2)
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
 
 #    print("-- Turn to face South")
 #    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 180.0))
@@ -106,13 +95,13 @@ async def run():
 #    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
 #    await asyncio.sleep(5)
 
-    # print("-- Go down 1 m/s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 1.0, 0.0))
-    # await asyncio.sleep(1)
+    print("-- Go down 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 1.0, 0.0))
+    await asyncio.sleep(1)
 
-    # print("-- Hold position for 2s")
-    # await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    # await asyncio.sleep(2)
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
 
 #    print("--Go North 1 m/s")
 #    await drone.offboard.set_velocity_ned(VelocityNedYaw(1.0, 0.0, 0.0, 0.0))
