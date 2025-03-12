@@ -51,10 +51,18 @@ async def run():
         await drone.action.land()
         return
     
-    while(True):
+    print("-- Go up 1 m/s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, -1.0, 0.0))
+    await asyncio.sleep(4)
+
+    print("-- Hold position for 2s")
+    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await asyncio.sleep(2)
+    
+    for i in range(200):
 
         x, y, z = simulator.run()
-        fwd, up, right, _ = controller.compute_velocity(x,y,z)
+        fwd, up, right, _ = controller.compute_velocity(z,y,x)
         await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, up, right, _))
 
 

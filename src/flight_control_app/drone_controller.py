@@ -13,67 +13,65 @@ z is motion forward/backwards.
 
 """
 
+from pixel_displacement_simulator import CameraAppSimulator
 
 class DroneController:
-    def __init__(self, kp_x=0.01, ki_x=0, kd_x=0.005,
-                 kp_y=0.01, ki_y=0, kd_y=0.005,
-                 kp_z=0.02, ki_z=0, kd_z=0.01,
-                 initial_target_area=20000, max_area_growth=2000):
-        self.kp_x, self.ki_x, self.kd_x = kp_x, ki_x, kd_x
-        self.kp_y, self.ki_y, self.kd_y = kp_y, ki_y, kd_y
+    def __init__(self, kp_xy=0.005, ki_xy=0, kd_xy=0.005,
+                 kp_z=0.0025, ki_z=0, kd_z=0.0025,
+                 initial_target_area=20000, max_area_growth=100):
+        self.kp_xy, self.ki_xy, self.kd_xy = kp_xy, ki_xy, kd_xy
         self.kp_z, self.ki_z, self.kd_z = kp_z, ki_z, kd_z
 
         self.target_area = initial_target_area
-        self.max_area_growth = max_area_growth  # max speed to move forward at
+        self.max_area_growth = max_area_growth
 
-        self.prev_x_error = 0
-        self.prev_y_error = 0
+        self.prev_xy_error = [0, 0]
         self.prev_z_error = 0
 
-        self.integral_x = 0
-        self.integral_y = 0
+        self.integral_xy = [0, 0]
         self.integral_z = 0
 
-    def compute_velocity(self, area, x, y):
-        # We should start to slow down as we get closer to the car in order to avoid over-shooting.
-        # to do this, we will set a maximum value for how fast we can travel forwards, as well as
-        # dynamically slow down the approach as the distance gets smaller.
-        distance_error = self.target_area - area  
-        area_growth_rate = min(self.max_area_growth, abs(distance_error) * 0.05)
+        self.max_velocity = 5.0
 
-        if distance_error > 0:
-            self.target_area += area_growth_rate  # Get closer
-        else:
-            self.target_area -= area_growth_rate  # Stay at a reasonable distance
+    def compute_velocity(self, area, x, y):
+        # Dynamic area growth adjustment with damping
+        distance_error = self.target_area - area
+        area_growth_rate = min(self.max_area_growth, abs(distance_error) * 0.02)
+        self.target_area += area_growth_rate * (1 if distance_error > 0 else -1)
 
         # Errors
-        x_error = -x  
-        y_error = -y  
-        z_error = self.target_area - area  
+        xy_error = [-x, -y]
+        z_error = self.target_area - area
 
         # PID Components
-        self.integral_x += x_error
-        self.integral_y += y_error
-        self.integral_z += z_error
+        for i in range(2):
+            self.integral_xy[i] = max(min(self.integral_xy[i] + xy_error[i], 1000), -1000)
 
-        derivative_x = x_error - self.prev_x_error
-        derivative_y = y_error - self.prev_y_error
+        self.integral_z = max(min(self.integral_z + z_error, 1000), -1000)
+
+        derivative_xy = [xy_error[i] - self.prev_xy_error[i] for i in range(2)]
         derivative_z = z_error - self.prev_z_error
 
         # Compute velocities
-        vel_x = (self.kp_x * x_error) + (self.ki_x * self.integral_x) + (self.kd_x * derivative_x)
-        vel_y = (self.kp_y * y_error) + (self.ki_y * self.integral_y) + (self.kd_y * derivative_y)
+        vel_x = (self.kp_xy * xy_error[0]) + (self.ki_xy * self.integral_xy[0]) + (self.kd_xy * derivative_xy[0])
+        vel_y = (self.kp_xy * xy_error[1]) + (self.ki_xy * self.integral_xy[1]) + (self.kd_xy * derivative_xy[1])
         vel_z = (self.kp_z * z_error) + (self.ki_z * self.integral_z) + (self.kd_z * derivative_z)
 
+        # Cap velocities to avoid unstable behavior
+        vel_x = max(min(vel_x, self.max_velocity), -self.max_velocity)
+        vel_y = max(min(vel_y, self.max_velocity), -self.max_velocity)
+        vel_z = max(min(vel_z, self.max_velocity), -self.max_velocity)
+
         # Update previous errors
-        self.prev_x_error = x_error
-        self.prev_y_error = y_error
+        self.prev_xy_error = xy_error
         self.prev_z_error = z_error
 
-        return vel_z, vel_x, vel_y, 0 
+        return vel_z, vel_x, vel_y, 0
 
 # Example usage
 controller = DroneController()
-for _ in range(10):  # Simulating 10 frames
-    velocity = controller.compute_velocity(area=40000, x=50, y=-30)
-    print("Velocity Vector:", velocity)
+simulator = CameraAppSimulator(50, -25, 2500)
+for _ in range(100):  # Simulating 10 frames
+    x, y, z = simulator.run()
+    fwd, up, right, _ = controller.compute_velocity(z,y,x)
+    print("Velocity Vector:", round(fwd,ndigits=3), round(up,ndigits=3), right)
