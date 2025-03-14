@@ -8,19 +8,23 @@ from mavsdk import System
 from mavsdk.offboard import (OffboardError, VelocityNedYaw)
 
 class DroneController:
-    def __init__(self, kp_xy=0.005, ki_xy=0, kd_xy=0.005,
-                 kp_z=0.0025, ki_z=0, kd_z=0.0025,
+    def __init__(self, kp_x=0.03, ki_x=0, kd_x=0.03,
+                 kp_y=0.03, ki_y=0, kd_y=0.03,
+                 kp_z=0.00025, ki_z=0, kd_z=0.0025,
                  initial_target_area=20000, max_area_growth=100):
-        self.kp_xy, self.ki_xy, self.kd_xy = kp_xy, ki_xy, kd_xy
+        self.kp_x, self.ki_x, self.kd_x = kp_x, ki_x, kd_x
+        self.kp_y, self.ki_y, self.kd_y = kp_y, ki_y, kd_y
         self.kp_z, self.ki_z, self.kd_z = kp_z, ki_z, kd_z
 
         self.target_area = initial_target_area
         self.max_area_growth = max_area_growth
 
-        self.prev_xy_error = [0, 0]
+        self.prev_x_error = 0
+        self.prev_y_error = 0
         self.prev_z_error = 0
 
-        self.integral_xy = [0, 0]
+        self.integral_x = 0
+        self.integral_y = 0
         self.integral_z = 0
 
         self.max_velocity = 5.0
@@ -32,21 +36,22 @@ class DroneController:
         self.target_area += area_growth_rate * (1 if distance_error > 0 else -1)
 
         # Errors
-        xy_error = [-x, -y]
+        x_error = -x
+        y_error = -y
         z_error = self.target_area - area
 
         # PID Components
-        for i in range(2):
-            self.integral_xy[i] = max(min(self.integral_xy[i] + xy_error[i], 1000), -1000)
-
+        self.integral_x = max(min(self.integral_x + x_error, 1000), -1000)
+        self.integral_y = max(min(self.integral_y + y_error, 1000), -1000)
         self.integral_z = max(min(self.integral_z + z_error, 1000), -1000)
 
-        derivative_xy = [xy_error[i] - self.prev_xy_error[i] for i in range(2)]
+        derivative_x = x_error - self.prev_x_error
+        derivative_y = y_error - self.prev_y_error
         derivative_z = z_error - self.prev_z_error
 
         # Compute velocities
-        vel_x = (self.kp_xy * xy_error[0]) + (self.ki_xy * self.integral_xy[0]) + (self.kd_xy * derivative_xy[0])
-        vel_y = (self.kp_xy * xy_error[1]) + (self.ki_xy * self.integral_xy[1]) + (self.kd_xy * derivative_xy[1])
+        vel_x = (self.kp_x * x_error) + (self.ki_x * self.integral_x) + (self.kd_x * derivative_x)
+        vel_y = (self.kp_y * y_error) + (self.ki_y * self.integral_y) + (self.kd_y * derivative_y)
         vel_z = (self.kp_z * z_error) + (self.ki_z * self.integral_z) + (self.kd_z * derivative_z)
 
         # Cap velocities to avoid unstable behavior
@@ -55,7 +60,8 @@ class DroneController:
         vel_z = max(min(vel_z, self.max_velocity), -self.max_velocity)
 
         # Update previous errors
-        self.prev_xy_error = xy_error
+        self.prev_x_error = x_error
+        self.prev_y_error = y_error
         self.prev_z_error = z_error
 
         return vel_z, vel_x, vel_y, 0
@@ -66,14 +72,18 @@ class CameraAppSimulator:
         self.delta_y = y
         self.delta_z = z
         self.frame_rate = frame_rate
-        self.timestep = 5
+        self.timestep = 50
 
     def update_parameters(self):
-        self.timestep = -5 if self.timestep == -5 else self.timestep
+        self.timestep = 50 if self.timestep == -30 else self.timestep
 
         # Balanced oscillation for left/right and up/down
-        self.delta_x += 10 if self.timestep > 0 else -10
-        self.delta_y += 10 if self.timestep > 0 else -10
+        if self.timestep > 0 :
+            self.delta_x += 5 
+            self.delta_y += 5
+        else :
+            self.delta_x -= 5
+            self.delta_y -= 5
 
         self.delta_z = min(self.delta_z + 50, 20000)  # Slow increase to stabilize
         self.timestep -= 1
