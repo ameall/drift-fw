@@ -10,7 +10,6 @@
 #include <memory>
 
 #include "camera.hpp"
-#include "model.hpp"
 
 /**
  * @class FrameManager
@@ -25,7 +24,7 @@ class FrameManager {
      * @param camera object containing relevant camera device and configuration
      *      information
      */
-    FrameManager(std::shared_ptr<Camera> camera);
+    explicit FrameManager(std::shared_ptr<Camera> camera);
 
     /**
      * @brief Releases the frame manager allocator used to manage memory

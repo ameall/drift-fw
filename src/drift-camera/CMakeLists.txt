@@ -26,6 +26,17 @@ find_package(PkgConfig REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(OpenCV REQUIRED)
 
+# Pull Nlohmann's JSON library from GitHub
+include(FetchContent)
+
+FetchContent_Declare(
+  json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.3  # Use the latest stable version
+)
+
+FetchContent_MakeAvailable(json)
+
 # Import libcamera libraries
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
 message(STATUS "libcamera library found:")
@@ -37,10 +48,12 @@ message(STATUS "    Include Path: ${LIBCAMERA_INCLUDE_DIRS}")
 add_executable(drift-camera
     ./src/drift_camera_main.cpp
     ./src/camera.cpp
+    ./src/message.cpp
     ./src/frame_buffer.cpp
     ./src/frame_ops.cpp
     ./src/logging.cpp
     ./src/model.cpp
+    ./src/socket.cpp
 )
 
 # Necesssary includes
@@ -55,6 +68,7 @@ target_include_directories(drift-camera PRIVATE
 target_link_libraries(drift-camera PkgConfig::LIBCAMERA)
 target_link_libraries(drift-camera ${JPEG_LIBRARIES})
 target_link_libraries(drift-camera ${OpenCV_LIBS})
+target_link_libraries(drift-camera nlohmann_json::nlohmann_json)
 
 # Add source files
 add_executable(test-script

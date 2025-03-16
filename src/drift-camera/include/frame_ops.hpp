@@ -19,7 +19,7 @@ constexpr uint16_t DEFAULT_CAMERA_HEIGHT = 600u;
  * @param plane image plane to remap
  * @return buffer containing re-mapped image data
  */
- uint8_t *map_frame_buffer(const libcamera::FrameBuffer::Plane &plane);
+uint8_t *map_frame_buffer(const libcamera::FrameBuffer::Plane &plane);
 
 /**
  * @brief Converts an array of XRGB data into an array of RGB data
