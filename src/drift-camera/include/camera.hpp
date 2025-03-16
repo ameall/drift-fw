@@ -17,7 +17,7 @@ class Camera {
     /**
      * @brief Initializes class members
      */
-    Camera();
+    explicit Camera();
 
     /**
      * @brief Releases and resets camera and related objects

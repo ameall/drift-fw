@@ -13,6 +13,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "message.hpp"
+#include "socket.hpp"
+
 static const std::string PERSON = "person";
 static const std::string CAR = "car";
 static const std::string BUS = "bus";
@@ -41,7 +44,7 @@ struct detection {
  */
 class Model {
   public:
-    Model();
+    explicit Model();
     ~Model() = default;
 
     /**
@@ -98,6 +101,17 @@ class Model {
      */
     void draw_bounding_boxes(cv::Mat& frame, const std::vector<detection>& detections, const std::vector<std::string>& classNames, const std::vector<int>& class_values);
 
+    /**
+     * @brief Sends the results of CV processing over the UNIX socket
+     *
+     * @param detection_area Area of an individual detection box
+     * @param delta_x X distancee in pixels between center of detection box and
+     *      center of image
+     * @param delta_y Y distancee in pixels between center of detection box and
+     *      center of image
+     */
+    void send_results(const int32_t detection_area, const int16_t delta_x, const int16_t delta_y);
+
   private:
     // Model and processing objects
     cv::dnn::Net net;
@@ -114,6 +128,11 @@ class Model {
     std::vector<detection> detections;
     std::map<int32_t, detection> new_tracked_boxes;
     int32_t next_id;
+
+    // Results senidng objects
+    SocketManager socket;
+    OutputsMessage message;
+    int32_t message_id;
 
     // Output processing functions
     void extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &outputs, const std::vector<int32_t> &class_values);

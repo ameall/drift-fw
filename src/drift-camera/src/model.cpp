@@ -7,8 +7,10 @@
 #include <cstdint>
 #include <opencv2/opencv.hpp>
 #include <string>
+#include <sys/socket.h>
 #include <vector>
 
+#include "logging.hpp"
 #include "model.hpp"
 
 static bool box_selected = false;
@@ -45,19 +47,21 @@ static const int16_t MODEL_PIXEL_HEIGHT = 416;
 constexpr uint32_t WAITKEY_DELAY = 10u;
 constexpr uint8_t ESCAPE_KEY_CODE = 27u;
 
-Model::Model() : next_id(0)
+Model::Model() : next_id(0), message_id(0)
 {
     configure_model();
+
+    socket.initialize_socket();
 }
 
 void Model::configure_model()
 {
-    // static const std::string MODEL_CFG_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.cfg";
-    // static const std::string MODEL_WEIGHTS_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.weights";
-    // static const std::string MODEL_ONNX_PATH = "/home/mealla/Documents/GitHub/drift-tracking/models/yolov5su.onnx";
-    static const std::string MODEL_CFG_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.cfg";
-    static const std::string MODEL_WEIGHTS_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.weights";
-    static const std::string MODEL_ONNX_PATH = "/home/drift/drift-tracking/models/yolov5su.onnx";
+    static const std::string MODEL_CFG_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.cfg";
+    static const std::string MODEL_WEIGHTS_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.weights";
+    static const std::string MODEL_ONNX_PATH = "/home/mealla/Documents/GitHub/drift-tracking/models/yolov5su.onnx";
+    // static const std::string MODEL_CFG_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.cfg";
+    // static const std::string MODEL_WEIGHTS_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.weights";
+    // static const std::string MODEL_ONNX_PATH = "/home/drift/drift-tracking/models/yolov5su.onnx";
 
     // net = cv::dnn::readNetFromONNX(MODEL_ONNX_PATH);
     net = cv::dnn::readNetFromDarknet(MODEL_CFG_PATH, MODEL_WEIGHTS_PATH);
@@ -146,6 +150,12 @@ void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &ou
                     class_ids.push_back(class_id);
                     confidences.push_back(score);
                     boxes.push_back(cv::Rect(left, top, width, height));
+
+                    int32_t area = width * height;
+                    int16_t delta_x = center_x - MODEL_PIXEL_WIDTH;
+                    int16_t delta_y = center_y - MODEL_PIXEL_HEIGHT;
+                    log_message(INFO, "Model::extract_outputs(): Results: Area: %d, X Delta: %d, Y Delta: %d", area, delta_x, delta_y);
+                    send_results(width * height, center_x - MODEL_PIXEL_WIDTH, center_y - MODEL_PIXEL_HEIGHT);
                 }
             }
         }
@@ -213,4 +223,11 @@ void Model::draw_bounding_boxes(cv::Mat& frame, const std::vector<detection>& de
         //int32_t top = std::max(box.y, labelSize.height);
         //cv::putText(frame, label, cv::Point(box.x, top), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
     }
+}
+
+void Model::send_results(const int32_t detection_area, const int16_t delta_x, const int16_t delta_y)
+{
+    message.create_message(message_id, detection_area, delta_x, delta_y);
+
+    socket.send_message(message);
 }
