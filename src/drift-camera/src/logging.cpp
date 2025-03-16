@@ -40,7 +40,7 @@ static const char* log_level_to_string(log_level level)
     }
 }
 
-void log_message(log_level level, const char* format, ...)
+void log_message(const log_level level, const char* format, ...)
 {
     char message_buffer[1024];
 

@@ -67,7 +67,7 @@ int8_t Camera::start_camera()
     return 0;
 }
 
-bool Camera::change_config(uint16_t width, uint16_t height)
+bool Camera::change_config(const uint16_t width, const uint16_t height)
 {
     // Width = 800, Height = 600 is default values. If we want to change these
     // values, we must verify the config before it gets applied to the camera
@@ -95,17 +95,17 @@ bool Camera::change_config(uint16_t width, uint16_t height)
     return true;
 }
 
-std::shared_ptr<libcamera::Camera> Camera::get_camera()
+std::shared_ptr<libcamera::Camera> Camera::get_camera() const
 {
     return camera;
 }
 
-std::shared_ptr<libcamera::CameraConfiguration> Camera::get_config()
+std::shared_ptr<libcamera::CameraConfiguration> Camera::get_config() const
 {
     return camera_config;
 }
 
-void Camera::print_cameras()
+void Camera::print_cameras() const
 {
     for (auto const &camera : camera_manager->cameras()) {
         log_message(INFO, "%s", camera->id().c_str());

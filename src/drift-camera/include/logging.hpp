@@ -18,4 +18,4 @@ enum log_level {
  * @param level What level to log the message at
  * @param format The message to log
  */
-void log_message(log_level level, const char* format, ...);
+void log_message(const log_level level, const char* format, ...);

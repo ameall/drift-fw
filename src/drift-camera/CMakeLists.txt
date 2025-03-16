@@ -24,6 +24,7 @@ add_compile_options(
 # Use PkgConfig to link libcamera
 find_package(PkgConfig REQUIRED)
 find_package(JPEG REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Import libcamera libraries
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
@@ -37,7 +38,9 @@ add_executable(drift-camera
     ./src/drift_camera_main.cpp
     ./src/camera.cpp
     ./src/frame_buffer.cpp
+    ./src/frame_ops.cpp
     ./src/logging.cpp
+    ./src/model.cpp
 )
 
 # Necesssary includes
@@ -46,10 +49,12 @@ target_include_directories(drift-camera PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${LIBCAMERA_INCLUDE_DIRS}
     ${JPEG_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 target_link_libraries(drift-camera PkgConfig::LIBCAMERA)
 target_link_libraries(drift-camera ${JPEG_LIBRARIES})
+target_link_libraries(drift-camera ${OpenCV_LIBS})
 
 # Add source files
 add_executable(test-script
