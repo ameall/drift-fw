@@ -1,7 +1,7 @@
 /**
  * @file frame_buffer.cpp
- * @brief Responsible for sending requests for and receiving frames from the
- *      Camera
+ * @brief Responsible for managing memory associated with sending request for
+ *      and receiving frames from the camera
  */
 
 #include <chrono>
@@ -10,85 +10,20 @@
 #include <jpeglib.h>
 #include <libcamera/libcamera.h>
 #include <memory>
+#include <opencv2/opencv.hpp>
+#include <queue>
+#include <string>
 #include <sys/mman.h>
 #include <thread>
 #include <vector>
 
+#include "camera.hpp"
 #include "frame_buffer.hpp"
+#include "frame_ops.hpp"
 #include "logging.hpp"
+#include "model.hpp"
 
-// The camera object from main that allows us to requeue requests from the
-// callback function
 extern std::shared_ptr<Camera> camera;
-
-// One byte each for R, G, and B
-constexpr uint8_t NUM_COMPONENTS_RGB = 3u;
-// One byte each for X, R, G, and B
-constexpr uint8_t NUM_COMPONENTS_XRGB = 4u;
-// Quality ranges from 0-100
-constexpr uint8_t JPEG_QUALITY = 100u;
-
-/**
- * @brief Allows for camera frames to be saved to disk as a JPEG image
- *
- * @param data buffer containing camera image data
- * @param width pixel width of the image
- * @param height pixel height of the image
- * @param filename Where to save the JPEG image to
- */
-void save_jpeg_image(const uint8_t *data, int32_t width, int32_t height, const std::string &filename)
-{
-    struct jpeg_compress_struct compression_info;
-    struct jpeg_error_mgr jpeg_error;
-    compression_info.err = jpeg_std_error(&jpeg_error);
-    jpeg_create_compress(&compression_info);
-
-    std::FILE *outfile = fopen(filename.c_str(), "wb");
-    if (!outfile) {
-        log_message(ERROR, "Failed to open file for writing: %s", filename.c_str());
-        return;
-    }
-
-    jpeg_stdio_dest(&compression_info, outfile);
-    compression_info.image_width = width;
-    compression_info.image_height = height;
-    compression_info.input_components = NUM_COMPONENTS_RGB;
-    compression_info.in_color_space = JCS_RGB;
-    jpeg_set_defaults(&compression_info);
-    jpeg_set_quality(&compression_info, JPEG_QUALITY, TRUE);
-    jpeg_start_compress(&compression_info, TRUE);
-
-    std::vector<uint8_t> rgb_data(width * height * NUM_COMPONENTS_RGB);
-    for (int i = 0; i < width * height; i++) {
-        rgb_data[i * NUM_COMPONENTS_RGB + 0] = data[i * NUM_COMPONENTS_XRGB + 2];  // R
-        rgb_data[i * NUM_COMPONENTS_RGB + 1] = data[i * NUM_COMPONENTS_XRGB + 1];  // G
-        rgb_data[i * NUM_COMPONENTS_RGB + 2] = data[i * NUM_COMPONENTS_XRGB + 0];  // B
-    }
-
-    while (compression_info.next_scanline < compression_info.image_height) {
-        JSAMPROW row_pointer = (JSAMPROW)&rgb_data[compression_info.next_scanline * width * NUM_COMPONENTS_RGB];
-        jpeg_write_scanlines(&compression_info, &row_pointer, 1);
-    }
-
-    jpeg_finish_compress(&compression_info);
-    jpeg_destroy_compress(&compression_info);
-    fclose(outfile);
-}
-
-/**
- * @brief Remaps the image frame plane into a data buffer
- *
- * @param plane image plane to remap
- */
-static void *map_frame_buffer(const libcamera::FrameBuffer::Plane &plane)
-{
-    void *mapped_memory = mmap(nullptr, plane.length, PROT_READ | PROT_WRITE, MAP_SHARED, plane.fd.get(), plane.offset);
-    if (mapped_memory == MAP_FAILED) {
-        log_message(ERROR, "Failed to map memory");
-        return nullptr;
-    }
-    return mapped_memory;
-}
 
 /**
  * @brief Callback function the libcamera Camera object will use to place image
@@ -98,6 +33,7 @@ static void *map_frame_buffer(const libcamera::FrameBuffer::Plane &plane)
  */
 static void request_complete(libcamera::Request *request)
 {
+    Model model;
     if (request->status() == libcamera::Request::RequestCancelled) {
         log_message(ERROR, "FrameManager::request_complete(): Frame request was cancelled");
         return;
@@ -120,14 +56,19 @@ static void request_complete(libcamera::Request *request)
         }
         libcamera::FrameBuffer::Plane plane = buffer->planes().at(0);
 
-        void *data = map_frame_buffer(plane);
+        // std::string filename = "image.jpg";
+        // save_plane_to_jpeg(filename, plane);
 
-        const uint8_t *pixel_data = static_cast<const uint8_t *>(data);
-        int width = 800;
-        int height = 600;
+        // cv::Mat image = cv::imread("image.jpg");
+        // if (!image.empty()) {
+        //     //cv::imshow("Loaded Image", image);
+        //     model.process_frame(image);
+        // }
 
-        std::string filename = "image1.jpg";
-        save_jpeg_image(pixel_data, width, height, filename);
+        const uint8_t *xrgb_image_data = map_frame_buffer(plane);
+        std::vector<uint8_t> rgb_data = convert_xrgb_to_rgb(xrgb_image_data, DEFAULT_CAMERA_WIDTH, DEFAULT_CAMERA_HEIGHT);
+        cv::Mat image(DEFAULT_CAMERA_HEIGHT, DEFAULT_CAMERA_WIDTH, CV_8UC3, rgb_data.data());
+        model.process_frame(image);
     }
 
     request->reuse(libcamera::Request::ReuseBuffers);

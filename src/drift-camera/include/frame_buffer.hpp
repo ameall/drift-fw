@@ -1,6 +1,7 @@
 /**
  * @file frame_buffer.hpp
- * @brief 
+ * @brief Responsible for managing memory associated with sending requests for
+ *      and receiving frames from the camera
  */
 
 #pragma once
@@ -23,7 +24,7 @@ class FrameManager {
      * @param camera object containing relevant camera device and configuration
      *      information
      */
-    FrameManager(std::shared_ptr<Camera> camera);
+    explicit FrameManager(std::shared_ptr<Camera> camera);
 
     /**
      * @brief Releases the frame manager allocator used to manage memory

@@ -10,6 +10,7 @@
 #include "camera.hpp"
 #include "frame_buffer.hpp"
 #include "logging.hpp"
+#include "model.hpp"
 
 std::shared_ptr<Camera> camera = std::make_shared<Camera>();
 
@@ -18,6 +19,14 @@ std::shared_ptr<Camera> camera = std::make_shared<Camera>();
  */
 int main()
 {
+    Model model;
+
+    const std::string path_to_video = "/home/mealla/Documents/GitHub/drift-tracking/videos/IMG_4220.mp4";
+    // const std::string path_to_video = "/home/drift/drift-tracking/videos/IMG_4220.mp4";
+    model.process_mp4(path_to_video);
+
+    return 0;
+
     log_message(INFO, "main(): Starting drift-camera application");
     camera->start_camera();
     camera->print_cameras();
@@ -28,7 +37,7 @@ int main()
     frame_manager.get_frame();
     frame_manager.queue_requests();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    while (1) {}
 
     return 0;
 }
