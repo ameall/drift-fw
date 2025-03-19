@@ -5,3 +5,4 @@ __MACOSX
 build
 .cache
 __pycache__
+venv

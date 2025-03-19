@@ -1,4 +1,6 @@
 """
+@file drone_controller.py
+
 This class implement as PID controller to determine the appropriate velocity 
 for the drone based on the position of the car in the frame.
 
@@ -10,16 +12,16 @@ flight_controller application.
 In this setup, x is motion left/right
 y is motion up/down
 z is motion forward/backwards.
-
 """
 
+from log import logger
 from pixel_displacement_simulator import CameraAppSimulator
 
 class DroneController:
     def __init__(self, kp_x=0.03, ki_x=0, kd_x=0.03,
                  kp_y=0.03, ki_y=0, kd_y=0.03,
                  kp_z=0.00025, ki_z=0, kd_z=0.0025,
-                 initial_target_area=20000, max_area_growth=100):
+                 initial_target_area=2000, max_area_growth=100):
         self.kp_x, self.ki_x, self.kd_x = kp_x, ki_x, kd_x
         self.kp_y, self.ki_y, self.kd_y = kp_y, ki_y, kd_y
         self.kp_z, self.ki_z, self.kd_z = kp_z, ki_z, kd_z
@@ -35,7 +37,7 @@ class DroneController:
         self.integral_y = 0
         self.integral_z = 0
 
-        self.max_velocity = 5.0
+        self.max_velocity = 1.5
 
     def compute_velocity(self, area, x, y):
         # Dynamic area growth adjustment with damping
@@ -74,10 +76,14 @@ class DroneController:
 
         return vel_z, vel_x, vel_y, 0
 
-# Example usage
-controller = DroneController()
-simulator = CameraAppSimulator(50, -25, 2500)
-for _ in range(100):  # Simulating 10 frames
-    x, y, z = simulator.run()
-    fwd, up, right, _ = controller.compute_velocity(z,y,x)
-    print("Velocity Vector:", round(fwd,ndigits=3), round(up,ndigits=3), right)
+def main():
+    # Example usage
+    controller = DroneController()
+    simulator = CameraAppSimulator(50, -25, 2500)
+    for _ in range(100):  # Simulating 10 frames
+        x, y, z = simulator.run()
+        fwd, up, right, _ = controller.compute_velocity(z,y,x)
+        logger.info("Velocity Vector:", round(fwd,ndigits=3), round(up,ndigits=3), right)
+
+if __name__ == "__main__":
+    main()
