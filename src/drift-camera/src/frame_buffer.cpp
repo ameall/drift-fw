@@ -11,7 +11,6 @@
 #include <libcamera/libcamera.h>
 #include <memory>
 #include <opencv2/opencv.hpp>
-#include <queue>
 #include <string>
 #include <sys/mman.h>
 #include <thread>

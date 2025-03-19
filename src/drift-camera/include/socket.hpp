@@ -42,7 +42,7 @@ class SocketManager {
      * @param message Camera outputs object containing message to send
      * @return true if the message is able to be sent; false otherwise 
      */
-    bool send_message(const OutputsMessage &message);
+    bool send_message(OutputsMessage &message);
 
     /**
      * @brief Closes the socket, if it is open
