@@ -1,5 +1,71 @@
-
 #!/usr/bin/env python3
+
+import socket
+import os
+import json
+import asyncio
+
+DEFAULT_SOCKET_NAME = "DRIFT.sock"
+DEFAULT_SOCKET_DIR = "/run/"
+
+OUTPUT_MESSAGE_SIZE = 10000
+MAX_SOCKET_CLIENTS = 20
+
+class UnixSocketServer:
+    def __init__(self, socket_name: str = DEFAULT_SOCKET_NAME):
+        self.socket_name = socket_name
+        self.socket_path = self.get_socket_path()
+
+    def get_socket_path(self) -> str:
+        xdg_runtime_dir = os.getenv("XDG_RUNTIME_DIR")
+        return f"{xdg_runtime_dir}/{self.socket_name}" if xdg_runtime_dir else f"{DEFAULT_SOCKET_DIR}/{self.socket_name}"
+
+    def _cleanup_socket(self) -> None:
+        if os.path.exists(self.socket_path):
+            os.unlink(self.socket_path)
+
+    def start_server(self) -> None:
+        self._cleanup_socket()
+
+        self.server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+        self.server_socket.bind(self.socket_path)
+        self.server_socket.listen(MAX_SOCKET_CLIENTS)
+
+    def handle_connections(self):
+        """Handle incoming client connections."""
+        while True:
+            # Accept a connection
+            client_socket, client_address = self.server_socket.accept()
+            print(f"Connection established with {client_address}")
+
+            try:
+                while True:
+                    # Receive data from the client
+                    data = client_socket.recv(OUTPUT_MESSAGE_SIZE)
+                    if not data:
+                        break  # No more data from the client
+
+                    json_data = json.loads(data.decode('utf-8'))
+                    print(f"Received: {data.decode('utf-8')}")
+
+                    x = json_data["x_off"]
+                    y = json_data["y_off"]
+                    area = json_data["det_area"]
+
+                    print(x, y, area)
+                    return x, y, area
+
+            finally:
+                # Close the client socket
+                client_socket.close()
+                print(f"Connection with {client_address} closed.")
+
+    def stop(self):
+        """Stop the server and clean up the socket file."""
+        if self.server_socket:
+            self.server_socket.close()
+            print("Server stopped.")
+        self._cleanup_socket()
 
 
 import asyncio
@@ -11,7 +77,7 @@ class DroneController:
     def __init__(self, kp_x=0.03, ki_x=0, kd_x=0.03,
                  kp_y=0.03, ki_y=0, kd_y=0.03,
                  kp_z=0.00025, ki_z=0, kd_z=0.0025,
-                 initial_target_area=20000, max_area_growth=100):
+                 initial_target_area=2000, max_area_growth=100):
         self.kp_x, self.ki_x, self.kd_x = kp_x, ki_x, kd_x
         self.kp_y, self.ki_y, self.kd_y = kp_y, ki_y, kd_y
         self.kp_z, self.ki_z, self.kd_z = kp_z, ki_z, kd_z
@@ -27,7 +93,7 @@ class DroneController:
         self.integral_y = 0
         self.integral_z = 0
 
-        self.max_velocity = 5.0
+        self.max_velocity = 1.5
 
     def compute_velocity(self, area, x, y):
         # Dynamic area growth adjustment with damping
@@ -100,7 +166,7 @@ async def run():
     controller = DroneController()
     simulator = CameraAppSimulator()
 #   use system address serial port for actual drone
-    await drone.connect(system_address="udp://:14540")
+    await drone.connect("serial:///dev/ttyAMA0:921600")
 
     print("Waiting for drone to connect...")
     async for state in drone.core.connection_state():
@@ -142,11 +208,20 @@ async def run():
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
     await asyncio.sleep(2)
     
-    for i in range(200):
+    server = UnixSocketServer()
+    server.start_server()
 
-        x, y, z = simulator.run()
-        fwd, up, right, _ = controller.compute_velocity(z,y,x)
+    while True:
+        x, y, area = server.handle_connections()
+        fwd, up, right, _ = controller.compute_velocity(area,y,x)
+        print("Velocity fwd: ", fwd, " up: ", up, "right: ", right)
         await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, up, right, _))
+
+    # for i in range(200):
+
+    #     x, y, z = simulator.run()
+    #     fwd, up, right, _ = controller.compute_velocity(z,y,x)
+    #     await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, up, right, _))
 
 
     # print("-- Go up 1 m/s")

@@ -38,7 +38,7 @@ static void mouse_callback(int32_t event, int32_t click_x, int32_t click_y, int3
     }
 }
 
-constexpr float CONFIDENCE_THRESHOLD = 0.8;
+constexpr float CONFIDENCE_THRESHOLD = 0.1;
 constexpr float NMS_THRESHOLD = 0.4;
 
 static const int16_t MODEL_PIXEL_WIDTH = 416;
@@ -56,12 +56,12 @@ Model::Model() : next_id(0), message_id(0)
 
 void Model::configure_model()
 {
-    static const std::string MODEL_CFG_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.cfg";
-    static const std::string MODEL_WEIGHTS_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.weights";
-    static const std::string MODEL_ONNX_PATH = "/home/mealla/Documents/GitHub/drift-tracking/models/yolov5su.onnx";
-    // static const std::string MODEL_CFG_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.cfg";
-    // static const std::string MODEL_WEIGHTS_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.weights";
-    // static const std::string MODEL_ONNX_PATH = "/home/drift/drift-tracking/models/yolov5su.onnx";
+    // static const std::string MODEL_CFG_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.cfg";
+    // static const std::string MODEL_WEIGHTS_PATH = "/home/mealla/Documents/GitHub/drift-tracking/untracked-models/yolov4-tiny.weights";
+    // static const std::string MODEL_ONNX_PATH = "/home/mealla/Documents/GitHub/drift-tracking/models/yolov5su.onnx";
+    static const std::string MODEL_CFG_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.cfg";
+    static const std::string MODEL_WEIGHTS_PATH = "/home/drift/drift-tracking/untracked-models/yolov4-tiny.weights";
+    static const std::string MODEL_ONNX_PATH = "/home/drift/drift-tracking/models/yolov5su.onnx";
 
     // net = cv::dnn::readNetFromONNX(MODEL_ONNX_PATH);
     net = cv::dnn::readNetFromDarknet(MODEL_CFG_PATH, MODEL_WEIGHTS_PATH);
@@ -131,6 +131,7 @@ void Model::process_mp4(const std::string video_path)
 
 void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &outputs, const std::vector<int32_t> &class_values)
 {
+    log_message(INFO, "Model::extract_outputs(): Extracting outputs from model");
     for (size_t i = 0; i < outputs.size(); ++i) {
         float* data = reinterpret_cast<float*>(outputs[i].data);
         for (int32_t j = 0; j < outputs[i].rows; ++j, data += outputs[i].cols) {

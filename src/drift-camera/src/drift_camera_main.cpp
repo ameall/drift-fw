@@ -19,11 +19,11 @@ std::shared_ptr<Camera> camera = std::make_shared<Camera>();
  */
 int main()
 {
-    Model model;
+    // Model model;
 
-    const std::string path_to_video = "/home/mealla/Documents/GitHub/drift-tracking/videos/IMG_4220.mp4";
+    // const std::string path_to_video = "/home/mealla/Documents/GitHub/drift-tracking/videos/IMG_4220.mp4";
     // const std::string path_to_video = "/home/drift/drift-tracking/videos/IMG_4220.mp4";
-    model.process_mp4(path_to_video);
+    // model.process_mp4(path_to_video);
 
     return 0;
 

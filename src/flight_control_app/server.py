@@ -41,8 +41,8 @@ class UnixSocketServer:
                 while True:
                     # Receive data from the client
                     data = client_socket.recv(OUTPUT_MESSAGE_SIZE)
-                    if not data:
-                        break  # No more data from the client
+                    # if not data:
+                    #    break  # No more data from the client
 
                     json_data = json.loads(data.decode('utf-8'))
                     print(f"Received: {data.decode('utf-8')}")
