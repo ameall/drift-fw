@@ -4,6 +4,7 @@
  *      to the flight control app
  */
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -53,7 +54,7 @@ bool SocketManager::initialize_socket()
     memset(&socket_address, 0, sizeof(socket_address));
 
     socket_address.sun_family = AF_UNIX;
-    strncpy(socket_address.sun_path, get_socket_path().c_str(), sizeof(socket_address.sun_path) - 1);
+    strncpy(socket_address.sun_path, socket_path.c_str(), sizeof(socket_address.sun_path) - 1);
 
     if (connect(socket_fd, reinterpret_cast<const struct sockaddr *>(&socket_address), sizeof(socket_address)) == -1) {
         log_message(ERROR, "SocketManager::connect(): Failed to connect to socket");
@@ -63,17 +64,23 @@ bool SocketManager::initialize_socket()
     return true;
 }
 
-bool SocketManager::send_message(const OutputsMessage &message)
+bool SocketManager::send_message(OutputsMessage &message)
 {
     if (socket_fd == -1) {
         log_message(ERROR, "SocketManager::send_message(): Socket not open, could not send message");
         return false;
     }
 
-    if (send(socket_fd, message.get_message_as_string().c_str(), message.get_message_as_string().size(), 0)) {
+    if (!message.is_message_valid()) {
+        log_message(ERROR, "SocketManager::send_message(): JSON message is not valid");
+        return false;
+    }
+
+    if (send(socket_fd, message.get_message_as_string().c_str(), message.get_message_as_string().size(), 0) == -1) {
         log_message(ERROR, "SocketManager::send_message(): Failed to send message on socket");
         return false;
     }
+    message.clear_message();
 
     return true;
 }
@@ -87,10 +94,6 @@ bool SocketManager::close_socket()
 
     if (close(socket_fd) == -1) {
         log_message(ERROR, "SocketManager::close_socket(): Unable to close socket");
-        return false;
-    }
-    if (unlink(socket_path.c_str()) == -1) {
-        log_message(ERROR, "SocketManager::close_socket(): Unable to unlink socket name");
         return false;
     }
     socket_fd = -1;

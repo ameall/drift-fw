@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <jpeglib.h>
-#include <libcamera/framebuffer.h>
 #include <libcamera/libcamera.h>
 #include <memory>
 #include <opencv2/opencv.hpp>
