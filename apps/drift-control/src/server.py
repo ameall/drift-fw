@@ -1,13 +1,25 @@
+"""
+@file server.py
+@brief UNIX Socket Server
+"""
+
 import json
 import os
 import socket
-from typing import Dict
+from typing import Dict, Optional, Tuple
+
+from log import logger
 
 DEFAULT_SOCKET_NAME = "DRIFT.sock"
 DEFAULT_SOCKET_DIR = "/run/"
 
 OUTPUT_MESSAGE_SIZE = 10000
 MAX_SOCKET_CLIENTS = 20
+
+MESSAGE_ID_FIELD_NAME = "id";
+DETECTION_AREA_FIELD_NAME = "det_area";
+DELTA_X_FIELD_NAME = "x_off";
+DELTA_Y_FIELD_NAME = "y_off";
 
 class UnixSocketServer:
     """ UNIX Socket Server Manager
@@ -53,11 +65,11 @@ class UnixSocketServer:
 
     def accept_client(self) -> None:
         """ Accepts a client connection on the UNIX socket """
-        print("Waiting")
+        logger.info("UnixSockerServer::accept_client(): Waiting for client connection")
         self.client_connection, client_address = self.server_socket.accept()
-        print("Connection established")
+        logger.info("UnixSocketServer::accept_client(): Client connection established")
 
-    def get_message_from_client(self) -> None | Dict:
+    def get_message_from_client(self) -> Optional[Dict[str, int]]:
         """ Reads a single message from the current client connected to the
                 socket
 
@@ -69,28 +81,29 @@ class UnixSocketServer:
 
         if not data:
             self.client_connection.close()
-            print("Client disconnected")
+            logger.info("UnixSocketServer::get_message_from_client(): Client connection closed")
 
         try:
             json_data = json.loads(data.decode('utf-8'))
-            print(f"Received: {json_data}")
+            logger.info(f"UnixSocketServer::get_message_from_client(): Received: {json_data}")
             return json_data
         except:
-            print("Invalid JSON message")
+            logger.warning("UnixSocketServer::get_message_from_client(): Invalid JSON message")
 
-    def handle_connections(self) -> None:
-        """Handle incoming client connections."""
-        while True:
-            self.accept_client()
+    def extract_values_from_message(self) -> Tuple[int, int, int]:
+        """ """
+        message = self.get_message_from_client()
+        if not message:
+            logger.info("UnixSocketServer::extract_values_from_message(): Client disconnected, no message")
+            return -1, -1, -1
 
-            while True:
-                self.get_message_from_client()
+        return message[DELTA_X_FIELD_NAME], message[DELTA_Y_FIELD_NAME], message[DETECTION_AREA_FIELD_NAME]
 
     def stop(self) -> None:
-        """Stop the server and clean up the socket file."""
+        """ Stop the server and clean up the socket file """
         if self.server_socket:
             self.server_socket.close()
-            print("Server stopped.")
+            logger.info("UnixSockerServer::stop(): Server stopped")
         self._cleanup_socket()
 
 
@@ -99,6 +112,6 @@ if __name__ == "__main__":
     try:
         server.start_server()
     except KeyboardInterrupt:
-        print("\nServer is shutting down...")
+        logger.info("main(): Server is shutting down")
     finally:
         server.stop()
