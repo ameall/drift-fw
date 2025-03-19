@@ -6,20 +6,21 @@
 import json
 import os
 import socket
-from typing import Dict, Optional, Tuple
+from typing import Dict, Final, Optional, Tuple
 
 from log import logger
 
-DEFAULT_SOCKET_NAME = "DRIFT.sock"
-DEFAULT_SOCKET_DIR = "/run/"
+DEFAULT_SOCKET_NAME: Final[str] = "DRIFT.sock"
+DEFAULT_SOCKET_DIR: Final[str] = "/run/"
 
-OUTPUT_MESSAGE_SIZE = 10000
-MAX_SOCKET_CLIENTS = 20
+OUTPUT_MESSAGE_SIZE: Final[int] = 10000
+MAX_SOCKET_CLIENTS: Final[int] = 20
 
-MESSAGE_ID_FIELD_NAME = "id";
-DETECTION_AREA_FIELD_NAME = "det_area";
-DELTA_X_FIELD_NAME = "x_off";
-DELTA_Y_FIELD_NAME = "y_off";
+MESSAGE_ID_FIELD_NAME: Final[str] = "id";
+DETECTION_AREA_FIELD_NAME: Final[str] = "det_area";
+DELTA_X_FIELD_NAME: Final[str] = "x_off";
+DELTA_Y_FIELD_NAME: Final[str] = "y_off";
+
 
 class UnixSocketServer:
     """ UNIX Socket Server Manager
@@ -50,10 +51,12 @@ class UnixSocketServer:
         self.socket_name = socket_name
         self.socket_path = get_socket_path()
 
+
     def _cleanup_socket(self) -> None:
         """ Cleans up the socket file in the system """
         if os.path.exists(self.socket_path):
             os.unlink(self.socket_path)
+
 
     def start_server(self) -> None:
         """ Creates the server and binds it to the socket file """
@@ -63,11 +66,13 @@ class UnixSocketServer:
         self.server_socket.bind(self.socket_path)
         self.server_socket.listen(MAX_SOCKET_CLIENTS)
 
+
     def accept_client(self) -> None:
         """ Accepts a client connection on the UNIX socket """
         logger.info("UnixSockerServer::accept_client(): Waiting for client connection")
         self.client_connection, client_address = self.server_socket.accept()
         logger.info("UnixSocketServer::accept_client(): Client connection established")
+
 
     def get_message_from_client(self) -> Optional[Dict[str, int]]:
         """ Reads a single message from the current client connected to the
@@ -90,6 +95,7 @@ class UnixSocketServer:
         except:
             logger.warning("UnixSocketServer::get_message_from_client(): Invalid JSON message")
 
+
     def extract_values_from_message(self) -> Tuple[int, int, int]:
         """ """
         message = self.get_message_from_client()
@@ -99,12 +105,14 @@ class UnixSocketServer:
 
         return message[DELTA_X_FIELD_NAME], message[DELTA_Y_FIELD_NAME], message[DETECTION_AREA_FIELD_NAME]
 
+
     def stop(self) -> None:
         """ Stop the server and clean up the socket file """
         if self.server_socket:
             self.server_socket.close()
             logger.info("UnixSockerServer::stop(): Server stopped")
         self._cleanup_socket()
+
 
 
 if __name__ == "__main__":

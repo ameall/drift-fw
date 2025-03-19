@@ -4,14 +4,15 @@
 """
 
 import asyncio
-import time
 from mavsdk import System
 from mavsdk.offboard import (OffboardError, VelocityNedYaw)
+import time
 
 from drone_controller import DroneController
 from log import logger
 from pixel_displacement_simulator import CameraAppSimulator
 from server import UnixSocketServer
+
 
 async def run():
     """ Does Offboard control using velocity NED coordinates. """
@@ -167,6 +168,7 @@ async def run():
             {error._result.result}")
 
     return
+
 
 if __name__ == "__main__":
     # Run the asyncio loop

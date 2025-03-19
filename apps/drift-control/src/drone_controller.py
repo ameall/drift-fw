@@ -15,19 +15,58 @@ z is motion forward/backwards.
 """
 
 from log import logger
+from math import copysign
+from typing import Final
+
 from pixel_displacement_simulator import CameraAppSimulator
 
-class DroneController:
-    def __init__(self, kp_x=0.03, ki_x=0, kd_x=0.03,
-                 kp_y=0.03, ki_y=0, kd_y=0.03,
-                 kp_z=0.00025, ki_z=0, kd_z=0.0025,
-                 initial_target_area=2000, max_area_growth=100):
-        self.kp_x, self.ki_x, self.kd_x = kp_x, ki_x, kd_x
-        self.kp_y, self.ki_y, self.kd_y = kp_y, ki_y, kd_y
-        self.kp_z, self.ki_z, self.kd_z = kp_z, ki_z, kd_z
 
-        self.target_area = initial_target_area
-        self.max_area_growth = max_area_growth
+DEFAULT_PROP_GAIN_X: Final[float] = 0.03
+DEFAULT_PROP_GAIN_Y: Final[float] = 0.03
+DEFAULT_PROP_GAIN_Z: Final[float] = 0.0025
+
+DEFAULT_INT_GAIN_X: Final[int] = 0
+DEFAULT_INT_GAIN_Y: Final[int] = 0
+DEFAULT_INT_GAIN_Z: Final[int] = 0
+
+DEFAULT_DER_GAIN_X: Final[float] = 0.03
+DEFAULT_DER_GAIN_Y: Final[float] = 0.03
+DEFAULT_DER_GAIN_Z: Final[float] = 0.0025
+
+INITIAL_TARGET_AREA: Final[int] = 2000
+MAX_AREA_GROWTH: Final[int] = 100
+
+MAX_VELOCITY: Final[int] = 1
+MAX_ACCELERATION: Final[float] = 0.1
+
+DAMPING_FACTOR: Final[float] = 0.02
+MAX_INTEGRAL: Final[int] = 1000
+MIN_INTEGRAL: Final[int] = -1000
+
+
+class DroneController:
+    def __init__(self) -> None:
+        self.kp_x = DEFAULT_PROP_GAIN_X
+        self.ki_x = DEFAULT_INT_GAIN_X
+        self.kd_x = DEFAULT_DER_GAIN_X
+
+        self.kp_y = DEFAULT_PROP_GAIN_Y
+        self.ki_y = DEFAULT_INT_GAIN_Y
+        self.kd_y = DEFAULT_DER_GAIN_Y
+
+        self.kp_z = DEFAULT_PROP_GAIN_Z
+        self.ki_z = DEFAULT_INT_GAIN_Z
+        self.kd_z = DEFAULT_DER_GAIN_Z
+
+        self.target_area = INITIAL_TARGET_AREA
+        self.max_area_growth = MAX_AREA_GROWTH
+
+        self.max_velocity = MAX_VELOCITY
+        self.max_acceleration = MAX_ACCELERATION
+
+        self.prev_x_velocity = 0
+        self.prev_y_velocity = 0
+        self.prev_z_velocity = 0
 
         self.prev_x_error = 0
         self.prev_y_error = 0
@@ -37,44 +76,54 @@ class DroneController:
         self.integral_y = 0
         self.integral_z = 0
 
-        self.max_velocity = 1.5
 
     def compute_velocity(self, area, x, y):
-        # Dynamic area growth adjustment with damping
-        distance_error = self.target_area - area
-        area_growth_rate = min(self.max_area_growth, abs(distance_error) * 0.02)
-        self.target_area += area_growth_rate * (1 if distance_error > 0 else -1)
+        def clamp(value, max_value, min_value):
+            return max(min(value, max_value), min_value)
 
-        # Errors
+        # Dynamic area growth adjustment with damping
+        area_error = self.target_area - area
+        area_growth_rate = min(self.max_area_growth, abs(area_error) * DAMPING_FACTOR)
+        self.target_area += area_growth_rate * copysign(1, area_error)
+
         x_error = -x
         y_error = -y
-        z_error = self.target_area - area
 
         # PID Components
-        self.integral_x = max(min(self.integral_x + x_error, 1000), -1000)
-        self.integral_y = max(min(self.integral_y + y_error, 1000), -1000)
-        self.integral_z = max(min(self.integral_z + z_error, 1000), -1000)
+        self.integral_x = clamp(self.integral_x + x_error, MAX_INTEGRAL, MIN_INTEGRAL)
+        self.integral_y = clamp(self.integral_y + y_error, MAX_INTEGRAL, MIN_INTEGRAL)
+        self.integral_z = clamp(self.integral_z + area_error, MAX_INTEGRAL, MIN_INTEGRAL)
 
         derivative_x = x_error - self.prev_x_error
         derivative_y = y_error - self.prev_y_error
-        derivative_z = z_error - self.prev_z_error
+        derivative_z = area_error - self.prev_z_error
 
         # Compute velocities
-        vel_x = (self.kp_x * x_error) + (self.ki_x * self.integral_x) + (self.kd_x * derivative_x)
-        vel_y = (self.kp_y * y_error) + (self.ki_y * self.integral_y) + (self.kd_y * derivative_y)
-        vel_z = (self.kp_z * z_error) + (self.ki_z * self.integral_z) + (self.kd_z * derivative_z)
+        x_velocity = (self.kp_x * x_error) + (self.ki_x * self.integral_x) + (self.kd_x * derivative_x)
+        y_velocity = (self.kp_y * y_error) + (self.ki_y * self.integral_y) + (self.kd_y * derivative_y)
+        z_velocity = (self.kp_z * area_error) + (self.ki_z * self.integral_z) + (self.kd_z * derivative_z)
 
-        # Cap velocities to avoid unstable behavior
-        vel_x = max(min(vel_x, self.max_velocity), -self.max_velocity)
-        vel_y = max(min(vel_y, self.max_velocity), -self.max_velocity)
-        vel_z = max(min(vel_z, self.max_velocity), -self.max_velocity)
+        # Cap velocities to within a set bound
+        x_velocity = clamp(x_velocity, self.max_velocity, -self.max_velocity)
+        y_velocity = clamp(y_velocity, self.max_velocity, -self.max_velocity)
+        z_velocity = clamp(z_velocity, self.max_velocity, -self.max_velocity)
+
+        # Cap change in velocity to within a set bound
+        x_velocity = clamp(x_velocity, self.prev_x_velocity + MAX_ACCELERATION, self.prev_x_velocity - MAX_ACCELERATION)
+        y_velocity = clamp(y_velocity, self.prev_y_velocity + MAX_ACCELERATION, self.prev_y_velocity - MAX_ACCELERATION)
+        z_velocity = clamp(z_velocity, self.prev_z_velocity + MAX_ACCELERATION, self.prev_z_velocity - MAX_ACCELERATION)
+
+        self.prev_x_velocity = x_velocity
+        self.prev_y_velocity = y_velocity
+        self.prev_z_velocity = z_velocity
 
         # Update previous errors
         self.prev_x_error = x_error
         self.prev_y_error = y_error
-        self.prev_z_error = z_error
+        self.prev_z_error = area_error
 
-        return vel_z, vel_x, vel_y, 0
+        return z_velocity, x_velocity, y_velocity, 0
+
 
 def main():
     # Example usage
@@ -84,6 +133,7 @@ def main():
         x, y, z = simulator.run()
         fwd, up, right, _ = controller.compute_velocity(z,y,x)
         logger.info("Velocity Vector:", round(fwd,ndigits=3), round(up,ndigits=3), right)
+
 
 if __name__ == "__main__":
     main()
