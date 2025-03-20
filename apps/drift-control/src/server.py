@@ -119,6 +119,7 @@ if __name__ == "__main__":
     server = UnixSocketServer()
     try:
         server.start_server()
+        server.accept_client()
     except KeyboardInterrupt:
         logger.info("main(): Server is shutting down")
     finally:

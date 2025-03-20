@@ -171,5 +171,17 @@ async def run():
 
 
 if __name__ == "__main__":
+    controller = DroneController()
+    server = UnixSocketServer()
+    server.start_server()
+    server.accept_client()
+
+    while True:
+        x, y, area = server.extract_values_from_message()
+        if x == -1 and y == -1 and area == -1:
+            server.accept_client()
+            continue
+        fwd, up, right, _ = controller.compute_velocity(area,y,x)
+        logger.info(f"Velocity fwd: {fwd} up: {up}, right {right}")
     # Run the asyncio loop
-    asyncio.run(run())
+    # asyncio.run(run())

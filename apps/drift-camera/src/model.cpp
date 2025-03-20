@@ -131,7 +131,6 @@ void Model::process_mp4(const std::string video_path)
 
 void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &outputs, const std::vector<int32_t> &class_values)
 {
-    log_message(INFO, "Model::extract_outputs(): Extracting outputs from model");
     for (size_t i = 0; i < outputs.size(); ++i) {
         float* data = reinterpret_cast<float*>(outputs[i].data);
         for (int32_t j = 0; j < outputs[i].rows; ++j, data += outputs[i].cols) {
@@ -155,8 +154,6 @@ void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &ou
                     int32_t area = width * height;
                     int16_t delta_x = center_x - MODEL_PIXEL_WIDTH;
                     int16_t delta_y = center_y - MODEL_PIXEL_HEIGHT;
-                    log_message(INFO, "Model::extract_outputs(): Results: Area: %d, X Delta: %d, Y Delta: %d", area, delta_x, delta_y);
-                    send_results(width * height, center_x - MODEL_PIXEL_WIDTH, center_y - MODEL_PIXEL_HEIGHT);
                 }
             }
         }
@@ -190,6 +187,9 @@ std::vector<detection> Model::process_outputs(const cv::Mat &frame, const std::v
 
         // Update the existing box or assign a new ID
         (max_iou > 0.5) ? new_tracked_boxes[best_match_id] = detection : new_tracked_boxes[next_id++] = detection;
+
+        log_message(INFO, "Model::extract_outputs(): Results: Area: %d, X Delta: %d, Y Delta: %d", area, delta_x, delta_y);
+        send_results(width * height, center_x - MODEL_PIXEL_WIDTH, center_y - MODEL_PIXEL_HEIGHT);
     }
 
     tracked_boxes = std::move(new_tracked_boxes);
