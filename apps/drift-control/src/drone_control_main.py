@@ -57,11 +57,11 @@ async def run():
 
     logger.info("-- Go up 1 m/s")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, -1.0, 0.0))
-    await asyncio.sleep(4)
+    await asyncio.sleep(2)
 
     logger.info("-- Hold position for 2s")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-    await asyncio.sleep(2)
+    await asyncio.sleep(3)
 
     server = UnixSocketServer()
     server.start_server()
