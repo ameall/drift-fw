@@ -1,7 +1,14 @@
-import socket
-import json
+"""
+@file client.py
+@brief UNIX Socket Client
+"""
 
-SOCKET_PATH = '/run/user/1000/DRIFT.sock'
+import json
+import socket
+from typing import Final
+
+SOCKET_PATH: Final[str] = '/run/user/1000/DRIFT.sock'
+
 
 def send_message(message):
     client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
@@ -11,6 +18,7 @@ def send_message(message):
     client_socket.sendall(message_json.encode('utf-8'))
 
     client_socket.close()
+
 
 if __name__ == "__main__":
     send_message({"key": "value"})
