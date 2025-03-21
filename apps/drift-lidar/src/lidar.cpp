@@ -83,3 +83,4 @@ void Lidar::close_serial()
 
     close(serial_port);
 }
+
