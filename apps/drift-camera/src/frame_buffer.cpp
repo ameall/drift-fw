@@ -5,18 +5,13 @@
  */
 
 #include <chrono>
-#include <cstdint>
 #include <cstdio>
 #include <jpeglib.h>
-#include <libcamera/libcamera.h>
-#include <memory>
 #include <opencv2/opencv.hpp>
-#include <string>
 #include <sys/mman.h>
 #include <thread>
 #include <vector>
 
-#include "camera.hpp"
 #include "frame_buffer.hpp"
 #include "frame_ops.hpp"
 #include "logging.hpp"

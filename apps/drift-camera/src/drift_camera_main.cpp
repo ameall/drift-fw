@@ -3,14 +3,12 @@
  * @brief Main running loop for drift-camera application
  */
 
-#include <libcamera/libcamera.h>
-
 #include "camera.hpp"
 #include "frame_buffer.hpp"
 #include "logging.hpp"
-#include "message.hpp"
-#include "model.hpp"
-#include "socket.hpp"
+// #include "message.hpp"
+// #include "model.hpp"
+// #include "socket.hpp"
 
 std::shared_ptr<Camera> camera = std::make_shared<Camera>();
 
@@ -52,7 +50,9 @@ int main()
     frame_manager.get_frame();
     frame_manager.queue_requests();
 
-    while (1) {}
+    while (1) {
+        // Need to add logic to allow flight control app to tell camera app to stop
+    }
 
     return 0;
 }

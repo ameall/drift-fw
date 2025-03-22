@@ -3,13 +3,12 @@
  * @brief Lidar class for DRIFT Drone
  */
 
-#include <cstdint>
 #include <fcntl.h>
-#include <iterator>
 #include <termios.h>
 #include <unistd.h>
 
 #include "lidar.hpp"
+#include "logging.hpp"
 
 constexpr uint8_t NUM_BITS_PER_BYTE = 8u;
 constexpr uint16_t BAUD_RATE = B115200;
@@ -21,13 +20,13 @@ bool Lidar::open_serial()
 {
     serial_port = open(port_name.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (serial_port < 0) {
-        fprintf(stderr, "Lidar::open_serial(): Error opening serial port %s\n", port_name.c_str());
+        log_message(ERROR, "Lidar::open_serial(): Error opening serial port %s", port_name.c_str());
         return false;
     }
 
     struct termios tty;
     if (tcgetattr(serial_port, &tty) != 0) {
-        fprintf(stderr, "Lidar::open_serial(): Failed to get serial port parameters\n");
+        log_message(ERROR, "Lidar::open_serial(): Failed to get serial port parameters");
         return false;
     }
 
@@ -48,7 +47,7 @@ bool Lidar::open_serial()
     tty.c_cflag &= ~CRTSCTS;
 
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
-        fprintf(stderr, "Lidar::open_serial(): Failed to set serial port parameters\n");
+        log_message(ERROR, "Lidar::open_serial(): Failed to set serial port parameters");
         return false;
     }
 
@@ -58,7 +57,7 @@ bool Lidar::open_serial()
 uint16_t Lidar::get_distance()
 {
     if (serial_port == -1) {
-        fprintf(stderr, "Lidar::get_distance(): Serial port not open\n");
+        log_message(ERROR, "Lidar::get_distance(): Serial port not open");
         return 0;
     }
 
@@ -68,7 +67,7 @@ uint16_t Lidar::get_distance()
                          && lidar_reading[0] == FRAME_HEADER_VALID_BYTE
                          && lidar_reading[1] == FRAME_HEADER_VALID_BYTE;
     if (!valid_reading) {
-        fprintf(stderr, "Lidar::get_distance(): Invalid reading from the LiDAR sensor\n");
+        log_message(ERROR, "Lidar::get_distance(): Invalid reading from the LiDAR sensor");
         return 0;
     }
 
@@ -78,7 +77,7 @@ uint16_t Lidar::get_distance()
 void Lidar::close_serial()
 {
     if (serial_port == INVALID_SERIAL_PORT) {
-        fprintf(stdout, "Lidar::close_serial(): Serial port is already closed\n");
+        log_message(ERROR, "Lidar::close_serial(): Serial port is already closed");
     }
 
     close(serial_port);

@@ -4,8 +4,6 @@
  *      this camera app to the flight control app
  */
 
-#include <nlohmann/json.hpp>
-
 #include "message.hpp"
 
 const std::string MESSAGE_ID_FIELD_NAME = "id";

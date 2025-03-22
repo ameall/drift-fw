@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>

@@ -3,10 +3,8 @@
  * @brief Implementation of Raspberry Pi GS Camera Manager for DRIFT Drone
  */
 
-#include <cstdint>
-#include <cstdio>
-#include <libcamera/libcamera.h>
 #include <memory>
+#include <string>
 
 #include "camera.hpp"
 #include "logging.hpp"

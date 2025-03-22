@@ -1,30 +1,54 @@
-#pragma once
 /**
- * @file lidar_message.hpp
- * @brief Defines the message structure for LiDAR data communication.
+ * @file message.hpp
+ * @brief JSON message manager for sending distance readings from this lidar
+ *      app to the flight control app
  */
 
-#ifndef MESSAGE_HPP
-#define MESSAGE_HPP
+#pragma once
 
+#include <cstdint>
+#include <nlohmann/json.hpp>
 #include <string>
 
+using nlohmann::json;
+
 class LidarMessage {
-public:
+  public:
+    /**
+     * @brief Creates a JSON message object
+     */
     explicit LidarMessage();
     ~LidarMessage() = default;
 
+    /**
+     * @brief Creates a JSON message to send over the socket
+     *
+     * @param message_id Unique identifier for each message
+     * @param distance LiDAR distance reading
+     */
     void create_message(const int32_t message_id, const uint16_t distance);
 
+    /**
+     * @brief Clears the json message and resets the valid flag
+     */
     void clear_message();
 
+    /**
+     * @brief Returns the message as a string instead of a JSON object
+     *
+     * @return string-ified JSON message
+     */
     std::string get_message_as_string() const;
 
+    /**
+     * @brief Returns whether the JSON message is valid
+     *
+     * @return true if the message is valid; false otherwise
+     */
     bool is_message_valid() const;
 
-private:
+  private:
     bool message_valid;
-    uint16_t distance;
-};
 
-#endif // LIDAR_MESSAGE_HPP
+    json message;
+};

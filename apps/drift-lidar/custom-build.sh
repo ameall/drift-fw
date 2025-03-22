@@ -8,7 +8,7 @@ RED="\033[31m"
 GREEN="\033[32m"
 RESET="\033[0m"
 
-ROOT_DIR="lidar-app"
+ROOT_DIR="drift-lidar"
 BUILD_DIR="build"
 
 check_run_directory() {

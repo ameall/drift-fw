@@ -57,7 +57,7 @@ bool SocketManager::initialize_socket()
     return true;
 }
 
-bool SocketManager::send_message(OutputsMessage &message)
+bool SocketManager::send_message(LidarMessage &message)
 {
     if (socket_fd == -1) {
         log_message(ERROR, "SocketManager::send_message(): Socket not open, could not send message");

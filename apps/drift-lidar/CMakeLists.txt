@@ -2,9 +2,9 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Create the project
-project(lidar-app
+project(drift-lidar
     VERSION 1.0
-    DESCRIPTION ""
+    DESCRIPTION "DRIFT LiDAR Control Application"
     LANGUAGES CXX
 )
 
@@ -16,14 +16,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+# Pull Nlohmann's JSON library from GitHub
+include(FetchContent)
+
+FetchContent_Declare(
+  json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.3  # Use the latest stable version
+)
+
+FetchContent_MakeAvailable(json)
+
 # Add source files
-add_executable(lidar-app
+add_executable(drift-lidar
     ./src/lidar.cpp
-    ./src/lidar_app_main.cpp
+    ./src/drift_lidar_main.cpp
+    ./src/logging.cpp
+    ./src/message.cpp
+    ./src/socket.cpp
 )
 
 # Necesssary includes
-target_include_directories(lidar-app PRIVATE
+target_include_directories(drift-lidar PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     ${CMAKE_SOURCE_DIR}
 )
+
+target_link_libraries(drift-lidar nlohmann_json::nlohmann_json)

@@ -4,13 +4,9 @@
  *      been received
  */
 
-#include <cstdint>
 #include <cstdio>
 #include <jpeglib.h>
-#include <libcamera/libcamera.h>
 #include <memory>
-#include <opencv2/opencv.hpp>
-#include <string>
 #include <sys/mman.h>
 #include <vector>
 

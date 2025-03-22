@@ -6,7 +6,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <nlohmann/json.hpp>
+#include <string>
 
 using nlohmann::json;
 

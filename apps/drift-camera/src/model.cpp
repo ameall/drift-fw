@@ -4,11 +4,7 @@
  *      processing
  */
 
-#include <cstdint>
-#include <opencv2/opencv.hpp>
-#include <string>
 #include <sys/socket.h>
-#include <vector>
 
 #include "logging.hpp"
 #include "model.hpp"
