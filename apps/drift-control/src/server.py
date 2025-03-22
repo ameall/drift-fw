@@ -120,6 +120,8 @@ if __name__ == "__main__":
     try:
         server.start_server()
         server.accept_client()
+        while True:
+            server.get_message_from_client()
     except KeyboardInterrupt:
         logger.info("main(): Server is shutting down")
     finally:
