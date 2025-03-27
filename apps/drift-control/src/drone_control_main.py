@@ -16,6 +16,16 @@ from server import UnixSocketServer
 
 async def run():
     """ Does Offboard control using velocity NED coordinates. """
+    controller = DroneController()
+    server = UnixSocketServer()
+    server.start_server()
+    # while True:
+    #     server.accept_client()
+    #     x, y, area = server.extract_values_from_message()
+    #     fwd, up, right, _ = controller.compute_velocity(area, x, y)
+    #     logger.info("");
+    #     logger.info(f"Velocity fwd: {fwd}, up: {up}, right: {right}")
+    #     logger.info("");
 
     drone = System()
     controller = DroneController()
@@ -57,25 +67,18 @@ async def run():
 
     logger.info("-- Go up 1 m/s")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, -1.0, 0.0))
-    await asyncio.sleep(2)
+    await asyncio.sleep(4)
 
     logger.info("-- Hold position for 2s")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
     await asyncio.sleep(3)
 
-    server = UnixSocketServer()
-    server.start_server()
-    server.accept_client()
-
-    #lidar_server = UnixSocketServer(socket_name="lidar_socket") # To differentiate between two sockets
-    #lidar_server.start_server()
-    #lidar_server.accept_client()
-
     while True:
+        server.accept_client()
         x, y, area = server.extract_values_from_message()
-        fwd, up, right, _ = controller.compute_velocity(area,y,x)
-        logger.info("Velocity fwd: ", fwd, " up: ", up, "right: ", right)
-        await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, up, right, _))
+        fwd, up, right, _ = controller.compute_velocity(area, x, y)
+        logger.info(f"Velocity fwd: {fwd}, up: {up}, right: {right}")
+        await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, -up, right, _))
 
     ''' # For landing when switching over to Lidar
 
@@ -186,20 +189,18 @@ async def run():
 
 
 if __name__ == "__main__":
-    controller = DroneController()
-    server = UnixSocketServer()
-    server.start_server()
-    server.accept_client()
-    #lidar_server = UnixSocketServer(socket_name="lidar_socket")
-    #lidar_server.start_server()
-    #lidar_server.accept_client()
+    # controller = DroneController()
+    # server = UnixSocketServer()
+    # server.start_server()
+    # server.accept_client()
 
-    while True:
-        x, y, area = server.extract_values_from_message()
-        if x == -1 and y == -1 and area == -1:
-            server.accept_client()
-            continue
-        fwd, up, right, _ = controller.compute_velocity(area,y,x)
-        logger.info(f"Velocity fwd: {fwd} up: {up}, right {right}")
+    # while True:
+    #     x, y, area = server.extract_values_from_message()
+    #     if x == -1 and y == -1 and area == -1:
+    #         server.accept_client()
+    #         continue
+    #     fwd, up, right, _ = controller.compute_velocity(area,y,x)
+    #     logger.info(f"Velocity fwd: {fwd} up: {up}, right {right}")
+
     # Run the asyncio loop
-    # asyncio.run(run())
+    asyncio.run(run())
