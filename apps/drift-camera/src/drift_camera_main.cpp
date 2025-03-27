@@ -7,10 +7,11 @@
 #include "frame_buffer.hpp"
 #include "logging.hpp"
 // #include "message.hpp"
-// #include "model.hpp"
+ #include "model.hpp"
 // #include "socket.hpp"
 
 std::shared_ptr<Camera> camera = std::make_shared<Camera>();
+std::shared_ptr<Model> camera = std::make_shared<Model>();
 
 /**
  * @brief Main program loop for drift-camera application
