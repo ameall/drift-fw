@@ -18,6 +18,9 @@
 #include "model.hpp"
 
 extern std::shared_ptr<Camera> camera;
+extern std::shared_ptr<Model> model;
+
+// int32_t count = 0;
 
 /**
  * @brief Callback function the libcamera Camera object will use to place image
@@ -27,7 +30,6 @@ extern std::shared_ptr<Camera> camera;
  */
 static void request_complete(libcamera::Request *request)
 {
-    Model model;
     if (request->status() == libcamera::Request::RequestCancelled) {
         log_message(ERROR, "FrameManager::request_complete(): Frame request was cancelled");
         return;
@@ -62,11 +64,14 @@ static void request_complete(libcamera::Request *request)
         const uint8_t *xrgb_image_data = map_frame_buffer(plane);
         std::vector<uint8_t> rgb_data = convert_xrgb_to_rgb(xrgb_image_data, DEFAULT_CAMERA_WIDTH, DEFAULT_CAMERA_HEIGHT);
         cv::Mat image(DEFAULT_CAMERA_HEIGHT, DEFAULT_CAMERA_WIDTH, CV_8UC3, rgb_data.data());
-        model.process_frame(image);
+        model->process_frame(image);
     }
 
     request->reuse(libcamera::Request::ReuseBuffers);
     camera->get_camera()->queueRequest(request);
+    // FPS tracking
+    // log_message(INFO, "%d", count);
+    // count++;
 }
 
 FrameManager::FrameManager(std::shared_ptr<Camera> camera) : camera(camera)
