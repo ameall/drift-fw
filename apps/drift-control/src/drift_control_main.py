@@ -5,7 +5,7 @@
 
 import asyncio
 from mavsdk import System
-from mavsdk.offboard import (OffboardError, VelocityNedYaw)
+from mavsdk.offboard import (OffboardError, VelocityBodyYawspeed)
 
 from drone_controller import DroneController
 from log import logger
@@ -14,7 +14,7 @@ from server import UnixSocketServer
 
 
 async def run():
-    """ Does Offboard control using velocity NED coordinates. """
+    """ Does Offboard control using velocity body coordinates. """
     # ======= Camera App Simulator ======= #
     # controller = DroneController()
     # server = UnixSocketServer()
@@ -55,7 +55,7 @@ async def run():
     await asyncio.sleep(15)
 
     logger.info("-- Setting initial setpoint")
-    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
 
     logger.info("-- Starting offboard")
     try:
@@ -68,11 +68,11 @@ async def run():
         return
 
     logger.info("-- Go up 1 m/s")
-    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, -1.0, 0.0))
+    await drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, -1.0, 0.0))
     await asyncio.sleep(4)
 
     logger.info("-- Hold position for 2s")
-    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
     await asyncio.sleep(3)
 
     while True:
@@ -80,7 +80,7 @@ async def run():
         x, y, area = server.extract_values_from_message()
         right, fwd, up = controller.compute_velocity(area, x, y)
         logger.info(f"Velocity fwd: {fwd}, up: {up}, right: {right}")
-        await drone.offboard.set_velocity_ned(VelocityNedYaw(fwd, right, up, 0))
+        await drone.offboard.set_velocity_body(VelocityBodyYawspeed(fwd, right, up, 0))
 
     logger.info("-- Stopping offboard")
     try:
