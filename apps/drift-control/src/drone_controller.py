@@ -77,7 +77,7 @@ class DroneController:
         self.integral_z = 0
 
 
-    def compute_velocity(self, area, x, y):
+    def compute_velocity(self, area, x_error, y_error):
         def clamp(value, max_value, min_value):
             return max(min(value, max_value), min_value)
 
@@ -85,9 +85,6 @@ class DroneController:
         area_error = self.target_area - area
         area_growth_rate = min(self.max_area_growth, abs(area_error) * DAMPING_FACTOR)
         self.target_area += area_growth_rate * copysign(1, area_error)
-
-        x_error = -x
-        y_error = -y
 
         # PID Components
         self.integral_x = clamp(self.integral_x + x_error, MAX_INTEGRAL, MIN_INTEGRAL)
@@ -122,7 +119,7 @@ class DroneController:
         self.prev_y_error = y_error
         self.prev_z_error = area_error
 
-        return z_velocity, x_velocity, y_velocity, 0
+        return x_velocity, y_velocity, z_velocity
 
 
 def main():
@@ -131,7 +128,7 @@ def main():
     simulator = CameraAppSimulator(50, -25, 2500)
     for _ in range(100):  # Simulating 10 frames
         x, y, z = simulator.run()
-        fwd, up, right, _ = controller.compute_velocity(z,y,x)
+        fwd, up, right = controller.compute_velocity(z,y,x)
         logger.info("Velocity Vector:", round(fwd,ndigits=3), round(up,ndigits=3), right)
 
 
