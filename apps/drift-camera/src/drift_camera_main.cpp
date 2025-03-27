@@ -21,14 +21,11 @@ int main()
     // SocketManager socket_manager;
     // socket_manager.initialize_socket();
     // OutputsMessage message;
-    // message.create_message(1, 20000, 500, -500);
-    // socket_manager.send_message(message);
-    // message.create_message(1, 20000, 500, -500);
-    // socket_manager.send_message(message);
-    // message.create_message(1, 20000, 500, -500);
-    // socket_manager.send_message(message);
-    // message.create_message(1, 20000, 500, -500);
-    // socket_manager.send_message(message);
+    // while (true) {
+    //     message.create_message(1, 20000, 500, -500);
+    //     socket_manager.send_message(message);
+    //     message.clear_message();
+    // }
 
     // return 0;
 

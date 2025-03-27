@@ -6,6 +6,7 @@
 import json
 import os
 import socket
+import time
 from typing import Dict, Final, Optional, Tuple
 
 from log import logger
@@ -95,6 +96,8 @@ class UnixSocketServer:
         except:
             logger.warning("UnixSocketServer::get_message_from_client(): Invalid JSON message")
 
+        time.sleep(0.1)
+
 
     def extract_values_from_message(self) -> Tuple[int, int, int]:
         """ """
@@ -119,9 +122,11 @@ if __name__ == "__main__":
     server = UnixSocketServer()
     try:
         server.start_server()
-        server.accept_client()
         while True:
-            server.get_message_from_client()
+            server.accept_client()
+            while True:
+                server.get_message_from_client()
+                server.extract_values_from_message()
     except KeyboardInterrupt:
         logger.info("main(): Server is shutting down")
     finally:

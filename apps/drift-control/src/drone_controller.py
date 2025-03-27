@@ -21,23 +21,23 @@ from typing import Final
 from pixel_displacement_simulator import CameraAppSimulator
 
 
-DEFAULT_PROP_GAIN_X: Final[float] = 0.03
-DEFAULT_PROP_GAIN_Y: Final[float] = 0.03
-DEFAULT_PROP_GAIN_Z: Final[float] = 0.0025
+DEFAULT_PROP_GAIN_X: Final[float] = 0
+DEFAULT_PROP_GAIN_Y: Final[float] = 0
+DEFAULT_PROP_GAIN_Z: Final[float] = 0
 
 DEFAULT_INT_GAIN_X: Final[int] = 0
 DEFAULT_INT_GAIN_Y: Final[int] = 0
 DEFAULT_INT_GAIN_Z: Final[int] = 0
 
-DEFAULT_DER_GAIN_X: Final[float] = 0.03
-DEFAULT_DER_GAIN_Y: Final[float] = 0.03
-DEFAULT_DER_GAIN_Z: Final[float] = 0.0025
+DEFAULT_DER_GAIN_X: Final[float] = 0
+DEFAULT_DER_GAIN_Y: Final[float] = 0
+DEFAULT_DER_GAIN_Z: Final[float] = 0
 
 INITIAL_TARGET_AREA: Final[int] = 2000
 MAX_AREA_GROWTH: Final[int] = 100
 
-MAX_VELOCITY: Final[int] = 1
-MAX_ACCELERATION: Final[float] = 0.1
+MAX_VELOCITY: Final[int] = 2
+MAX_ACCELERATION: Final[float] = 0.4
 
 DAMPING_FACTOR: Final[float] = 0.02
 MAX_INTEGRAL: Final[int] = 1000
