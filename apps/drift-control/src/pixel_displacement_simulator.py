@@ -6,8 +6,6 @@
 import asyncio
 import time
 
-from client import *
-
 from log import logger
 
 

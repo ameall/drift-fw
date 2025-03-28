@@ -16,16 +16,16 @@ from server import UnixSocketServer
 async def run():
     """ Does Offboard control using velocity body coordinates. """
     # ======= Camera App Simulator ======= #
-    # controller = DroneController()
-    # server = UnixSocketServer()
-    # server.start_server()
-    # while True:
-    #     server.accept_client()
-    #     x, y, area = server.extract_values_from_message()
-    #     fwd, up, right = controller.compute_velocity(area, x, y)
-    #     logger.info("");
-    #     logger.info(f"Velocity fwd: {fwd}, up: {up}, right: {right}")
-    #     logger.info("");
+    controller = DroneController()
+    server = UnixSocketServer()
+    server.start_server()
+    while True:
+        server.accept_client()
+        x, y, area = server.extract_values_from_message()
+        fwd, up, right = controller.compute_velocity(area, x, y)
+        logger.info("");
+        logger.info(f"Velocity fwd: {fwd}, up: {up}, right: {right}")
+        logger.info("");
 
     # ======= Main Flight Loop ======= #
     drone = System()
