@@ -5,9 +5,14 @@
 
 #include <memory>
 #include <string>
+#include <sys/mman.h>
 
 #include "camera.hpp"
 #include "logging.hpp"
+
+// Default camera parameters
+constexpr uint16_t DEFAULT_CAMERA_WIDTH = 800u;
+constexpr uint16_t DEFAULT_CAMERA_HEIGHT = 600u;
 
 Camera::Camera() :
     camera_manager(std::make_unique<libcamera::CameraManager>()),
@@ -17,31 +22,33 @@ Camera::Camera() :
 
 Camera::~Camera()
 {
-    camera->release();
-    camera_manager->stop();
+    if (camera) {
+        camera->release();
+    }
+    if (camera_manager) {
+        camera_manager->stop();
+    }
     camera.reset();
-    camera_config->end();
+    if (camera_config) {
+        camera_config->end();
+    }
 }
 
 int8_t Camera::start_camera()
 {
     camera_manager->start();
-
-    print_cameras();
+    // print_cameras();
 
     auto cameras = camera_manager->cameras();
-
     if (cameras.empty()) {
         log_message(ERROR, "Camera::start_camera(): Camera manager did not detect any camera devices");
         camera_manager->stop();
         exit(EXIT_FAILURE);
     }
 
-    std::string camera_id = cameras[0]->id();
-
-    camera = camera_manager->get(camera_id);
+    camera = camera_manager->get(cameras[0]->id());
     if (camera == nullptr) {
-        log_message(ERROR, "Camera::start_camera(): Camera not found");
+        log_message(ERROR, "Camera::start_camera(): Failed to acquire camera");
         exit(EXIT_FAILURE);
     }
 
@@ -57,8 +64,8 @@ int8_t Camera::start_camera()
         exit(EXIT_FAILURE);
     }
 
-    libcamera::StreamConfiguration &stream_config = camera_config->at(0);
-    log_message(INFO, "Camera::start_camera(): Default viewfinder configuration is: %s", stream_config.toString().c_str());
+    // libcamera::StreamConfiguration &stream_config = camera_config->at(0);
+    // log_message(INFO, "Camera::start_camera(): Default viewfinder configuration is: %s", stream_config.toString().c_str());
 
     camera->configure(camera_config.get());
 
@@ -67,9 +74,16 @@ int8_t Camera::start_camera()
 
 bool Camera::change_config(const uint16_t width, const uint16_t height)
 {
-    // Width = 800, Height = 600 is default values. If we want to change these
-    // values, we must verify the config before it gets applied to the camera
+    if (!camera_config) {
+        log_message(ERROR, "Camera::change_config(): Camera configuration is not initialized");
+        return false;
+    }
+
     libcamera::StreamConfiguration &stream_config = camera_config->at(0);
+    if (width == stream_config.size.width && height == stream_config.size.height) {
+        return true;
+    }
+
     stream_config.size.width = width;
     stream_config.size.height = height;
 
@@ -93,18 +107,22 @@ bool Camera::change_config(const uint16_t width, const uint16_t height)
     return true;
 }
 
-std::shared_ptr<libcamera::Camera> Camera::get_camera() const
+std::shared_ptr<libcamera::Camera> Camera::get_camera() const noexcept
 {
     return camera;
 }
 
-std::shared_ptr<libcamera::CameraConfiguration> Camera::get_config() const
+std::shared_ptr<libcamera::CameraConfiguration> Camera::get_config() const noexcept
 {
     return camera_config;
 }
 
-void Camera::print_cameras() const
+void Camera::print_cameras() const noexcept
 {
+    if (!camera_manager) {
+        return;
+    }
+
     for (auto const &camera : camera_manager->cameras()) {
         log_message(INFO, "%s", camera->id().c_str());
     }

@@ -11,7 +11,7 @@
 // #include "socket.hpp"
 
 std::shared_ptr<Camera> camera = std::make_shared<Camera>();
-std::shared_ptr<Model> camera = std::make_shared<Model>();
+std::shared_ptr<Model> model = std::make_shared<Model>();
 
 /**
  * @brief Main program loop for drift-camera application
@@ -39,6 +39,7 @@ int main()
     // return 0;
 
     log_message(INFO, "main(): Starting drift-camera application");
+
     camera->start_camera();
     camera->print_cameras();
 

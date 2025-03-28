@@ -25,6 +25,11 @@ class Camera {
      */
     ~Camera();
 
+    Camera(const Camera&) = delete;
+    Camera& operator=(const Camera&) = delete;
+    Camera(Camera&&) = delete;
+    Camera& operator=(Camera&&) = delete;
+
     /**
      * @brief Configures and starts the Raspberry Pi GS camera
      *
@@ -50,7 +55,7 @@ class Camera {
      *
      * @return libcamera Camera object representing the camera
      */
-    std::shared_ptr<libcamera::Camera> get_camera() const;
+    std::shared_ptr<libcamera::Camera> get_camera() const noexcept;
 
     /**
      * @brief Gets the current configuration of the camera device object
@@ -58,12 +63,12 @@ class Camera {
      * @return libcamera CameraConfiguration object containing the camera
      *      configuration
      */
-    std::shared_ptr<libcamera::CameraConfiguration> get_config() const;
+    std::shared_ptr<libcamera::CameraConfiguration> get_config() const noexcept;
 
     /**
      * @brief Prints all found camera devices
      */
-    void print_cameras() const;
+    void print_cameras() const noexcept;
 
   private:
     /**
