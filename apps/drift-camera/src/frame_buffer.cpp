@@ -55,7 +55,7 @@ static void request_complete(libcamera::Request *request)
         cv::Mat rgb_image;
         cv::cvtColor(xrgb_image, rgb_image, cv::COLOR_BGRA2BGR);
         cv::imwrite("image.jpg", rgb_image);
-        model->process_frame(rgb_image);
+        model.process_frame(rgb_image);
     }
 
     request->reuse(libcamera::Request::ReuseBuffers);
