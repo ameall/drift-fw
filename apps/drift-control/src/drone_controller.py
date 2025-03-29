@@ -21,15 +21,15 @@ from typing import Final
 from pixel_displacement_simulator import CameraAppSimulator
 
 
-DEFAULT_PROP_GAIN_X: Final[float] = 0
+DEFAULT_PROP_GAIN_X: Final[float] = 0.05
 DEFAULT_PROP_GAIN_Y: Final[float] = 0
 DEFAULT_PROP_GAIN_Z: Final[float] = 0
 
-DEFAULT_INT_GAIN_X: Final[int] = 0
-DEFAULT_INT_GAIN_Y: Final[int] = 0
-DEFAULT_INT_GAIN_Z: Final[int] = 0
+DEFAULT_INT_GAIN_X: Final[float] = 0
+DEFAULT_INT_GAIN_Y: Final[float] = 0
+DEFAULT_INT_GAIN_Z: Final[float] = 0
 
-DEFAULT_DER_GAIN_X: Final[float] = 0
+DEFAULT_DER_GAIN_X: Final[float] = 0.05
 DEFAULT_DER_GAIN_Y: Final[float] = 0
 DEFAULT_DER_GAIN_Z: Final[float] = 0
 
@@ -37,7 +37,7 @@ INITIAL_TARGET_AREA: Final[int] = 2000
 MAX_AREA_GROWTH: Final[int] = 100
 
 MAX_VELOCITY: Final[int] = 2
-MAX_ACCELERATION: Final[float] = 0.4
+MAX_ACCELERATION: Final[float] = 10.0
 
 DAMPING_FACTOR: Final[float] = 0.02
 MAX_INTEGRAL: Final[int] = 1000
@@ -81,6 +81,11 @@ class DroneController:
         def clamp(value, max_value, min_value):
             return max(min(value, max_value), min_value)
 
+        if x_error > 50:
+            x_error -= 50
+        if x_error < 50:
+            x_error += 50
+
         # Dynamic area growth adjustment with damping
         area_error = self.target_area - area
         area_growth_rate = min(self.max_area_growth, abs(area_error) * DAMPING_FACTOR)
@@ -118,6 +123,9 @@ class DroneController:
         self.prev_x_error = x_error
         self.prev_y_error = y_error
         self.prev_z_error = area_error
+
+        if x_error < 50 and x_error > -50:
+            x_velocity = 0
 
         return x_velocity, y_velocity, z_velocity
 

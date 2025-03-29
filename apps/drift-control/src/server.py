@@ -86,8 +86,9 @@ class UnixSocketServer:
         data = self.client_connection.recv(OUTPUT_MESSAGE_SIZE)
 
         if not data:
-            self.client_connection.close()
-            logger.info("UnixSocketServer::get_message_from_client(): Client connection closed")
+            # self.client_connection.close()
+            # logger.info("UnixSocketServer::get_message_from_client(): Client connection closed")
+            pass
 
         try:
             json_data = json.loads(data.decode('utf-8'))
