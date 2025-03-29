@@ -32,6 +32,7 @@ BufferManager buffer_manager;
 static void request_complete(libcamera::Request *request)
 {
     Model model;
+
     if (request->status() == libcamera::Request::RequestCancelled) {
         log_message(ERROR, "FrameManager::request_complete(): Frame request was cancelled");
         return;

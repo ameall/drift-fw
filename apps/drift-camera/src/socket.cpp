@@ -80,6 +80,8 @@ bool SocketManager::send_message(OutputsMessage &message)
 
 bool SocketManager::close_socket()
 {
+    log_message(INFO, "SocketManager::close_socket(): Closing socket");
+
     if (socket_fd == -1) {
         log_message(INFO, "SocketManager::close_socket(): No socket is open");
         return true;
