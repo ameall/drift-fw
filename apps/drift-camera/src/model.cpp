@@ -79,8 +79,8 @@ void Model::process_frame(cv::Mat frame)
 
     detected_boxes = process_outputs(frame, outputs, class_values);
 
-    //draw_bounding_boxes(frame, detected_boxes, class_names, class_values);
-    //cv::imshow("Frame", frame);
+    // draw_bounding_boxes(frame, detected_boxes, class_names, class_values);
+    // cv::imshow("Frame", frame);
 }
 
 bool Model::end_processing() const

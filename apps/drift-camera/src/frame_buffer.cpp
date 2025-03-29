@@ -12,13 +12,14 @@
 #include <thread>
 #include <vector>
 
+#include "buffer_manager.hpp"
 #include "frame_buffer.hpp"
-#include "frame_ops.hpp"
 #include "logging.hpp"
 #include "model.hpp"
 
 extern std::shared_ptr<Camera> camera;
-extern std::shared_ptr<Model> model;
+
+BufferManager buffer_manager;
 
 // int32_t count = 0;
 
@@ -30,6 +31,8 @@ extern std::shared_ptr<Model> model;
  */
 static void request_complete(libcamera::Request *request)
 {
+    Model model;
+
     if (request->status() == libcamera::Request::RequestCancelled) {
         log_message(ERROR, "FrameManager::request_complete(): Frame request was cancelled");
         return;
@@ -41,30 +44,19 @@ static void request_complete(libcamera::Request *request)
         return;
     }
 
-    const std::map<const libcamera::Stream *, libcamera::FrameBuffer *> &buffers = request->buffers();
-
-    for (auto buffer_pair : buffers) {
-        libcamera::FrameBuffer *buffer = buffer_pair.second;
+    for (auto &[stream, buffer] : request->buffers()) {
         const libcamera::FrameMetadata &metadata = buffer->metadata();
 
         for (const libcamera::FrameMetadata::Plane &frame_plane : metadata.planes()) {
             log_message(INFO, "FrameManager::request_complete(): Metadata sequence %u; Bytes used: %u", metadata.sequence, frame_plane.bytesused);
         }
-        libcamera::FrameBuffer::Plane plane = buffer->planes().at(0);
 
-        // std::string filename = "image.jpg";
-        // save_plane_to_jpeg(filename, plane);
-
-        // cv::Mat image = cv::imread("image.jpg");
-        // if (!image.empty()) {
-        //     //cv::imshow("Loaded Image", image);
-        //     model.process_frame(image);
-        // }
-
-        const uint8_t *xrgb_image_data = map_frame_buffer(plane);
-        std::vector<uint8_t> rgb_data = convert_xrgb_to_rgb(xrgb_image_data, DEFAULT_CAMERA_WIDTH, DEFAULT_CAMERA_HEIGHT);
-        cv::Mat image(DEFAULT_CAMERA_HEIGHT, DEFAULT_CAMERA_WIDTH, CV_8UC3, rgb_data.data());
-        model->process_frame(image);
+        uint8_t* xrgb_data = buffer_manager.get_buffer(buffer);
+        cv::Mat xrgb_image(camera->get_config()->at(0).size.height, camera->get_config()->at(0).size.width, CV_8UC4, xrgb_data);
+        cv::Mat rgb_image;
+        cv::cvtColor(xrgb_image, rgb_image, cv::COLOR_BGRA2BGR);
+        cv::imwrite("image.jpg", rgb_image);
+        model.process_frame(rgb_image);
     }
 
     request->reuse(libcamera::Request::ReuseBuffers);
@@ -87,6 +79,7 @@ int8_t FrameManager::setup_buffers()
 {
     allocator = std::unique_ptr<libcamera::FrameBufferAllocator>(new libcamera::FrameBufferAllocator(camera->get_camera()));
     for (libcamera::StreamConfiguration &stream_config : *camera->get_config()) {
+        stream_config.bufferCount = 4;
         int8_t ret = allocator->allocate(stream_config.stream());
         if (ret < 0) {
             log_message(ERROR, "FrameManager::setup_buffers(): Buffer allocation failed");
@@ -118,6 +111,8 @@ int8_t FrameManager::create_request()
             log_message(ERROR, "FrameManager::create_request(): Can't create buffer for request");
             return ret;
         }
+
+        buffer_manager.map_buffer(&(*buffer));
 
         requests.push_back(std::move(request));
     }
