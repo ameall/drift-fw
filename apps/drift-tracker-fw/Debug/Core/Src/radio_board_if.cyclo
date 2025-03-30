@@ -1,0 +1,7 @@
+../Core/Src/radio_board_if.c:10:9:RBI_Init	1
+../Core/Src/radio_board_if.c:21:9:RBI_DeInit	1
+../Core/Src/radio_board_if.c:27:9:RBI_ConfigRFSwitch	1
+../Core/Src/radio_board_if.c:33:9:RBI_GetTxConfig	1
+../Core/Src/radio_board_if.c:39:9:RBI_IsTCXO	1
+../Core/Src/radio_board_if.c:45:9:RBI_IsDCDC	1
+../Core/Src/radio_board_if.c:51:9:RBI_GetRFOMaxPowerConfig	2

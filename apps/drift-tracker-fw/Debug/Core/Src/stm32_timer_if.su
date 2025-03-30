@@ -1,0 +1,12 @@
+../Core/Src/stm32_timer_if.c:52:21:PPP_Init	4	static
+../Core/Src/stm32_timer_if.c:63:21:PPP_DeInit	4	static
+../Core/Src/stm32_timer_if.c:73:21:PPP_StartTimer	16	static
+../Core/Src/stm32_timer_if.c:83:21:PPP_StopTimer	4	static
+../Core/Src/stm32_timer_if.c:93:10:PPP_GetMinimumTimeout	4	static
+../Core/Src/stm32_timer_if.c:103:10:PPP_ms2Tick	16	static
+../Core/Src/stm32_timer_if.c:113:10:PPP_Tick2ms	16	static
+../Core/Src/stm32_timer_if.c:123:10:PPP_GetTimerElapsedTime	4	static
+../Core/Src/stm32_timer_if.c:133:10:PPP_GetTimerValue	4	static
+../Core/Src/stm32_timer_if.c:143:6:PPP_IrqHandler	4	static
+../Core/Src/stm32_timer_if.c:152:10:PPP_SetTimerContext	4	static
+../Core/Src/stm32_timer_if.c:162:10:PPP_GetTimerContext	4	static
