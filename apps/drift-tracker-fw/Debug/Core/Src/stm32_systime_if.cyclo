@@ -1,0 +1,5 @@
+../Core/Src/stm32_systime_if.c:39:10:RTC_IF_GetTime	1
+../Core/Src/stm32_systime_if.c:44:6:RTC_IF_BkUp_Write_Seconds	1
+../Core/Src/stm32_systime_if.c:49:6:RTC_IF_BkUp_Write_SubSeconds	1
+../Core/Src/stm32_systime_if.c:54:10:RTC_IF_BkUp_Read_Seconds	1
+../Core/Src/stm32_systime_if.c:59:10:RTC_IF_BkUp_Read_SubSeconds	1
