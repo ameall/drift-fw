@@ -34,7 +34,7 @@ static void mouse_callback(int32_t event, int32_t click_x, int32_t click_y, int3
     }
 }
 
-constexpr float CONFIDENCE_THRESHOLD = 0.3;
+constexpr float CONFIDENCE_THRESHOLD = 0.6;
 constexpr float NMS_THRESHOLD = 0.4;
 
 constexpr int16_t MODEL_PIXEL_WIDTH = 416;
@@ -153,8 +153,9 @@ void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &ou
                     int16_t delta_x = center_x - MODEL_PIXEL_CENTER_X;
                     int16_t delta_y = center_y - MODEL_PIXEL_CENTER_Y;
 
-                    log_message(INFO, "Model::extract_outputs(): Results: Area: %d, X Delta: %d, Y Delta: %d", area, delta_x, delta_y);
+                    log_message(INFO, "Model::extract_outputs(): Results: Confidence: %f, Area: %d, X Delta: %d, Y Delta: %d", confidence, area, delta_x, delta_y);
                     send_results(width * height, delta_x, delta_y);
+                    return;
                 }
             }
         }

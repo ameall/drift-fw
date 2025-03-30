@@ -29,7 +29,7 @@ DEFAULT_INT_GAIN_X: Final[float] = 0
 DEFAULT_INT_GAIN_Y: Final[float] = 0
 DEFAULT_INT_GAIN_Z: Final[float] = 0
 
-DEFAULT_DER_GAIN_X: Final[float] = 0.05
+DEFAULT_DER_GAIN_X: Final[float] = 0#.05
 DEFAULT_DER_GAIN_Y: Final[float] = 0
 DEFAULT_DER_GAIN_Z: Final[float] = 0
 
@@ -37,11 +37,14 @@ INITIAL_TARGET_AREA: Final[int] = 2000
 MAX_AREA_GROWTH: Final[int] = 100
 
 MAX_VELOCITY: Final[int] = 2
-MAX_ACCELERATION: Final[float] = 10.0
+MAX_ACCELERATION: Final[float] = 2 * MAX_VELOCITY
 
 DAMPING_FACTOR: Final[float] = 0.02
 MAX_INTEGRAL: Final[int] = 1000
 MIN_INTEGRAL: Final[int] = -1000
+
+PID_DEADZONE_WIDTH: Final[int] = 150
+PID_DEADZONE_HALF_WIDTH: Final[int] = PID_DEADZONE_WIDTH // 2
 
 
 class DroneController:
@@ -59,10 +62,6 @@ class DroneController:
         self.kd_z = DEFAULT_DER_GAIN_Z
 
         self.target_area = INITIAL_TARGET_AREA
-        self.max_area_growth = MAX_AREA_GROWTH
-
-        self.max_velocity = MAX_VELOCITY
-        self.max_acceleration = MAX_ACCELERATION
 
         self.prev_x_velocity = 0
         self.prev_y_velocity = 0
@@ -81,20 +80,40 @@ class DroneController:
         def clamp(value, max_value, min_value):
             return max(min(value, max_value), min_value)
 
-        if x_error > 50:
-            x_error -= 50
-        if x_error < 50:
-            x_error += 50
+        def integral_clamp(integral_plus_error):
+            return clamp(integral_plus_error, MAX_INTEGRAL, MIN_INTEGRAL)
+
+        def velocity_clamp(velocity):
+            return clamp(velocity, MAX_VELOCITY, -MAX_VELOCITY)
+
+        def acceleration_clamp(current_velocity, previous_velocity):
+            return clamp(current_velocity, previous_velocity + MAX_ACCELERATION, previous_velocity - MAX_ACCELERATION)
+
+        def error_in_deadzone(error):
+            return True if (error < PID_DEADZONE_HALF_WIDTH and error > -PID_DEADZONE_HALF_WIDTH) else False
+
+        def offset_error(error, offset):
+            if error > offset:
+                error -= offset
+            elif error < -offset:
+                error += offset
+            return error
+
+        x_in_deadzone = error_in_deadzone(x_error)
+        y_in_deadzone = error_in_deadzone(y_error)
+
+        x_error = offset_error(x_error, PID_DEADZONE_HALF_WIDTH)
+        y_error = offset_error(y_error, PID_DEADZONE_HALF_WIDTH)
 
         # Dynamic area growth adjustment with damping
         area_error = self.target_area - area
-        area_growth_rate = min(self.max_area_growth, abs(area_error) * DAMPING_FACTOR)
+        area_growth_rate = min(MAX_AREA_GROWTH, abs(area_error) * DAMPING_FACTOR)
         self.target_area += area_growth_rate * copysign(1, area_error)
 
         # PID Components
-        self.integral_x = clamp(self.integral_x + x_error, MAX_INTEGRAL, MIN_INTEGRAL)
-        self.integral_y = clamp(self.integral_y + y_error, MAX_INTEGRAL, MIN_INTEGRAL)
-        self.integral_z = clamp(self.integral_z + area_error, MAX_INTEGRAL, MIN_INTEGRAL)
+        self.integral_x = integral_clamp(self.integral_x + x_error)
+        self.integral_y = integral_clamp(self.integral_y + y_error)
+        self.integral_z = integral_clamp(self.integral_z + area_error)
 
         derivative_x = x_error - self.prev_x_error
         derivative_y = y_error - self.prev_y_error
@@ -106,14 +125,14 @@ class DroneController:
         z_velocity = (self.kp_z * area_error) + (self.ki_z * self.integral_z) + (self.kd_z * derivative_z)
 
         # Cap velocities to within a set bound
-        x_velocity = clamp(x_velocity, self.max_velocity, -self.max_velocity)
-        y_velocity = clamp(y_velocity, self.max_velocity, -self.max_velocity)
-        z_velocity = clamp(z_velocity, self.max_velocity, -self.max_velocity)
+        x_velocity = velocity_clamp(x_velocity)
+        y_velocity = velocity_clamp(y_velocity)
+        z_velocity = velocity_clamp(z_velocity)
 
         # Cap change in velocity to within a set bound
-        x_velocity = clamp(x_velocity, self.prev_x_velocity + MAX_ACCELERATION, self.prev_x_velocity - MAX_ACCELERATION)
-        y_velocity = clamp(y_velocity, self.prev_y_velocity + MAX_ACCELERATION, self.prev_y_velocity - MAX_ACCELERATION)
-        z_velocity = clamp(z_velocity, self.prev_z_velocity + MAX_ACCELERATION, self.prev_z_velocity - MAX_ACCELERATION)
+        x_velocity = acceleration_clamp(x_velocity, self.prev_x_velocity)
+        y_velocity = acceleration_clamp(y_velocity, self.prev_y_velocity)
+        z_velocity = acceleration_clamp(z_velocity, self.prev_z_velocity)
 
         self.prev_x_velocity = x_velocity
         self.prev_y_velocity = y_velocity
@@ -124,8 +143,12 @@ class DroneController:
         self.prev_y_error = y_error
         self.prev_z_error = area_error
 
-        if x_error < 50 and x_error > -50:
+        if x_in_deadzone:
+            logger.info("X DEADZONE")
             x_velocity = 0
+        if y_in_deadzone:
+            logger.info("Y DEADZONE")
+            y_velocity = 0
 
         return x_velocity, y_velocity, z_velocity
 

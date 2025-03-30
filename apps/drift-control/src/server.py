@@ -15,7 +15,7 @@ DEFAULT_SOCKET_NAME: Final[str] = "DRIFT.sock"
 DEFAULT_SOCKET_DIR: Final[str] = "/run/"
 
 OUTPUT_MESSAGE_SIZE: Final[int] = 10000
-MAX_SOCKET_CLIENTS: Final[int] = 20
+MAX_SOCKET_CLIENTS: Final[int] = 10
 
 MESSAGE_ID_FIELD_NAME: Final[str] = "id";
 DETECTION_AREA_FIELD_NAME: Final[str] = "det_area";
