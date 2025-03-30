@@ -11,11 +11,12 @@ from PIL import Image
 # from pyqtgraph.dockarea import *
 import folium 
 import requests 
+from GPS import GPS
 
 REMOTE_DIR = "C:\\Users\\chamo\\OneDrive\\Desktop\\Pic" # Update with actual directory
 COORDINATE_URL = "http:\\raspberrypi.local\\coordinates"  # Update with actual coordinates
 TEMP = "C:\\Users\\chamo\\OneDrive\\Desktop\\Pic\\tmp" # Intermediate directory for image processing
-
+gps = GPS('COM4')  # Replace with your GPS port
 # UDP or TCP connection to the drone
 
 
@@ -114,7 +115,7 @@ class ImageViewer(QWidget):
         self.map_button = QPushButton("Drop Payload", self)
         self.map_button.clicked.connect(self.main_app.show_map_view)
         self.map_button.setStyleSheet("background-color: #5E81AC; color: white; padding: 10px; border-radius: 5px;")
-        self.map_button.setEnabled(False)
+        # self.map_button.setEnabled(False)
         # self.close_button.clicked.connect(self.open_map)
         lowerLeft.addWidget(self.map_button)
 
@@ -274,20 +275,19 @@ class MapWidget(QWidget):
         # auto refresh every 10 seconds
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh_map)
-        self.timer.start(10000)
+        self.timer.start(1000)
 
     def initiate(self):
         try:
             #response = requests.get(COORDINATE_URL)
             #if response.status_code == 200:
-                #coordinates = response.json()
-                #lati, longi = coordinates['latitude'], coordinates['longitude']
-                longi = -71.05977000
-                lati = 42.35843000
-               
-                m = folium.Map(location=[lati, longi], zoom_start=18)
-                folium.Marker([lati, longi], popup="TARGET").add_to(m)
-                self.web_view.setHtml(m._repr_html_())
+            #coordinates = response.json()
+            #lati, longi = coordinates['latitude'], coordinates['longitude']
+            lati, longi, alt = gps.get_gps_data()
+            
+            m = folium.Map(location=[lati, longi], zoom_start=18)
+            folium.Marker([lati, longi], popup="TARGET").add_to(m)
+            self.web_view.setHtml(m._repr_html_())
                 
             #else:
                 #self.web_view.setHtml("<h3>Failed to fetch coordinates</h3>")
@@ -302,8 +302,9 @@ class MapWidget(QWidget):
             #if response.status_code == 200:
                 #coordinates = response.json()
                 #lati, longi = coordinates['latitude'], coordinates['longitude']
-                longi = -71.05977000
-                lati = 42.35843000
+                lati, longi, alt = gps.get_gps_data()
+                # longi = -71.05977000
+                # lati = 42.35843000
 
                 m = folium.Map(location=[lati, longi], zoom_start=18)
                 folium.Marker([lati, longi], popup="TARGET").add_to(m)
