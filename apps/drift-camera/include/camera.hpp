@@ -1,6 +1,6 @@
 /**
  * @file camera.hpp
- * @brief Raspberry Pi GS Camera Manager for DRIFT Drone
+ * @brief Raspberry Pi GS Camera class declaration
  */
 
 #pragma once
@@ -25,6 +25,7 @@ class Camera {
      */
     ~Camera();
 
+    // Deleting copy and move constructors
     Camera(const Camera&) = delete;
     Camera& operator=(const Camera&) = delete;
     Camera(Camera&&) = delete;
@@ -71,19 +72,7 @@ class Camera {
     void print_cameras() const noexcept;
 
   private:
-    /**
-     * @brief The CameraManager runs for the lifetime of the application and is
-     *      responsible for abstracting the camera->application pipeline
-     */
     std::unique_ptr<libcamera::CameraManager> camera_manager;
-
-    /**
-     * @brief The actual camera; must be acquired by the CameraManger
-     */
     std::shared_ptr<libcamera::Camera> camera;
-
-    /**
-     * @brief Represents the current configuration of the camera
-     */
     std::shared_ptr<libcamera::CameraConfiguration> camera_config;
 };

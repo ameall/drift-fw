@@ -4,12 +4,10 @@
  *      and receiving frames from the camera
  */
 
-#include <chrono>
 #include <cstdio>
 #include <jpeglib.h>
 #include <opencv2/opencv.hpp>
 #include <sys/mman.h>
-#include <thread>
 #include <vector>
 
 #include "buffer_manager.hpp"
@@ -19,9 +17,7 @@
 
 extern std::shared_ptr<Camera> camera;
 
-BufferManager buffer_manager;
-
-// int32_t count = 0;
+static BufferManager buffer_manager;
 
 /**
  * @brief Callback function the libcamera Camera object will use to place image
@@ -33,15 +29,8 @@ static void request_complete(libcamera::Request *request)
 {
     Model model;
 
-    if (request->status() == libcamera::Request::RequestCancelled) {
-        log_message(ERROR, "FrameManager::request_complete(): Frame request was cancelled");
-        return;
-    } else if (request->status() == libcamera::Request::RequestPending) {
-        log_message(ERROR, "FrameManager::request_complete(): Frame request still pending");
-        return;
-    } else if (request->status() != libcamera::Request::RequestComplete) {
-        log_message(ERROR, "FrameManager::request_complete(): Frame request incomplete");
-        return;
+    if (request->status() != libcamera::Request::RequestComplete) {
+        log_message(ERROR, "request_complete(): Frame request was not completed");
     }
 
     for (auto &[stream, buffer] : request->buffers()) {
@@ -55,20 +44,14 @@ static void request_complete(libcamera::Request *request)
         cv::Mat xrgb_image(camera->get_config()->at(0).size.height, camera->get_config()->at(0).size.width, CV_8UC4, xrgb_data);
         cv::Mat rgb_image;
         cv::cvtColor(xrgb_image, rgb_image, cv::COLOR_BGRA2BGR);
-        cv::imwrite("image.jpg", rgb_image);
         model.process_frame(rgb_image);
     }
 
     request->reuse(libcamera::Request::ReuseBuffers);
     camera->get_camera()->queueRequest(request);
-    // FPS tracking
-    // log_message(INFO, "%d", count);
-    // count++;
 }
 
-FrameManager::FrameManager(std::shared_ptr<Camera> camera) : camera(camera)
-{
-}
+FrameManager::FrameManager(std::shared_ptr<Camera> camera) : camera(camera) {}
 
 FrameManager::~FrameManager()
 {
@@ -120,18 +103,12 @@ int8_t FrameManager::create_request()
     return 0;
 }
 
-int8_t FrameManager::get_frame()
+void FrameManager::get_frames()
 {
     camera->get_camera()->requestCompleted.connect(request_complete);
     camera->get_camera()->start();
-    return 0;
-}
 
-void FrameManager::queue_requests()
-{
     for (std::unique_ptr<libcamera::Request> &request : requests) {
         camera->get_camera()->queueRequest(request.get());
     }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }

@@ -1,6 +1,6 @@
 /**
  * @file logging.hpp
- * @brief Wrapped functions for logging messages to the console
+ * @brief Logging function declarations
  */
 
 /**

@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <ctime>
+#include <fstream>
 
 #include "logging.hpp"
 

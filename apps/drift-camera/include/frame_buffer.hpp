@@ -1,7 +1,6 @@
 /**
  * @file frame_buffer.hpp
- * @brief Responsible for managing memory associated with sending requests for
- *      and receiving frames from the camera
+ * @brief FrameManager class declaration
  */
 
 #pragma once
@@ -32,6 +31,12 @@ class FrameManager {
      */
     ~FrameManager();
 
+    // Deleting copy and move constructors
+    FrameManager(const FrameManager&) = delete;
+    FrameManager& operator=(const FrameManager&) = delete;
+    FrameManager(FrameManager&&) = delete;
+    FrameManager& operator=(FrameManager&&) = delete;
+
     /**
      * @brief Allocates buffers for the camera
      *
@@ -49,29 +54,11 @@ class FrameManager {
 
     /**
      * @brief Starts the camera and sends frame requests
-     *
-     * @return 0 if the camera is successfully started; error value otherwise
      */
-    int8_t get_frame();
-
-    /**
-     * @brief Adds requests to the queue
-     */
-    void queue_requests();
+    void get_frames();
 
   private:
-    /**
-     * @brief Camera object containing the camera from which we will get images
-     */
     std::shared_ptr<Camera> camera;
-
-    /**
-     * @brief Manages memory associated with frame buffers
-     */
     std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
-
-    /**
-     * @brief Manages image requests that will be sent to the camera
-     */
     std::vector<std::unique_ptr<libcamera::Request>> requests;
 };

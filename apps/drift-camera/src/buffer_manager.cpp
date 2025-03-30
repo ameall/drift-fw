@@ -1,6 +1,6 @@
 /**
  * @file buffer_manager.cpp
- * @brief 
+ * @brief Manages the frames for capturing images from the camera
  */
 
 #include <cstdio>

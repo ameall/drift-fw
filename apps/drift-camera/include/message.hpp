@@ -1,7 +1,6 @@
 /**
  * @file message.hpp
- * @brief JSON message manager for sending camera image processing outputs from
- *      this camera app to the flight control app
+ * @brief OutputsMessage class declaration
  */
 
 #pragma once
@@ -12,13 +11,26 @@
 
 using nlohmann::json;
 
+/**
+ * @class OutputsMessage
+ * @brief Manages the messages sent by the camera application to the flight
+ *      control application
+ *
+ */
 class OutputsMessage {
   public:
     /**
      * @brief Creates a JSON message object
      */
     explicit OutputsMessage();
+
     ~OutputsMessage() = default;
+
+    // Deleting copy and move constructors
+    OutputsMessage(const OutputsMessage&) = delete;
+    OutputsMessage& operator=(const OutputsMessage&) = delete;
+    OutputsMessage(OutputsMessage&&) = delete;
+    OutputsMessage& operator=(OutputsMessage&&) = delete;
 
     /**
      * @brief Creates a JSON message to send over the socket
@@ -35,24 +47,23 @@ class OutputsMessage {
     /**
      * @brief Clears the json message and resets the valid flag
      */
-    void clear_message();
+    void clear_message() noexcept;
 
     /**
      * @brief Returns the message as a string instead of a JSON object
      *
      * @return string-ified JSON message
      */
-    std::string get_message_as_string() const;
+    std::string get_message_as_string() const noexcept;
 
     /**
      * @brief Returns whether the JSON message is valid
      *
      * @return true if the message is valid; false otherwise
      */
-    bool is_message_valid() const;
+    bool is_message_valid() const noexcept;
 
   private:
     bool message_valid;
-
     json message;
 };
