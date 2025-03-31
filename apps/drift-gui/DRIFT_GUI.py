@@ -1,18 +1,19 @@
 ﻿from re import M
 import sys
 import os
-import shutil
+import csv
 from telnetlib import SE
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QStackedWidget, QRubberBand, QHBoxLayout
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QPixmap, QIcon, QImage
 from PyQt5.QtCore import Qt, QRect, QTimer, QSize
-from PIL import Image
+from PIL import Image, ImageDraw
 # from pyqtgraph.dockarea import *
 import folium 
 import requests 
 
 REMOTE_DIR = "C:\\Users\\chamo\\OneDrive\\Desktop\\Pic" # Update with actual directory
+LOG_DIR = "C:\\Users\\chamo\\OneDrive\\Desktop\\Logs" # Update with actual directory
 COORDINATE_URL = "http:\\raspberrypi.local\\coordinates"  # Update with actual coordinates
 TEMP = "C:\\Users\\chamo\\OneDrive\\Desktop\\Pic\\tmp" # Intermediate directory for image processing
 
@@ -162,8 +163,13 @@ class ImageViewer(QWidget):
         
         
     def Begin(self):
+        # Load logfile inputs
+        self.log_list = self.get_logs()
+        self.log_list = self.fixlogs(self.log_list)
+
         # Load first available image
         self.image_list = self.get_images()
+        print(self.image_list)
         self.image_index = 0
         self.display_image()
 
@@ -176,12 +182,46 @@ class ImageViewer(QWidget):
         self.timer.timeout.connect(self.next_image)
         self.timer.start(100)
 
+        #  left x y, width height
+    def fixlogs(self, log_list):
+        for key, value_list in log_list.items():
+            for i, values in enumerate(value_list):
+                if isinstance(values, list):
+                    values[2] = values[0] + values[2]
+                    values[3] = values[1] + values[3] 
+        return log_list
 
     def load_images(self):
         if self.image_list:
             self.image_index = (self.image_index + 1) % len(self.image_list)
             self.display_image()
-          
+
+    def get_logs(self):
+        # Get log coordinates
+        if os.path.exists(LOG_DIR):
+            for file in os.listdir(LOG_DIR):
+                if file.endswith(".csv"):
+                    csv_path = os.path.join(LOG_DIR, file)
+                    data = self.logdict(csv_path)
+                    return data
+        return []
+
+    def logdict(self, path):
+        coord_dict = {}
+        with open(path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if row:  
+                    try:
+                        key = float(row[0])  
+                        values = list(map(float, row[1:]))
+                        if key in coord_dict:
+                            coord_dict[key].append(values)
+                        else:
+                            coord_dict[key] = [values]
+                    except ValueError as e:
+                        print(f"Skipping invalid row {row}: {e}")
+        return coord_dict         
             
     def get_images(self):
         # Get jpg files
@@ -189,10 +229,27 @@ class ImageViewer(QWidget):
             return [os.path.join(REMOTE_DIR, file) for file in os.listdir(REMOTE_DIR) if file.endswith(".jpg")]
         return []
 
+  # def sort_all(self, image_path, log_path)
+
+
+    def draw_bound(self, img):
+        draw = ImageDraw.Draw(img)
+        try:
+            for values in self.log_list[self.image_index]:
+                x = values[0]
+                y = values[1]
+                z = values[2]
+                w = values[3]
+                draw.rectangle((x, y, z, w), width = 3, outline=(57, 255, 20))
+            return img
+        except KeyError:
+            return img
+
     def resize_Image(self, image_path):
         img = Image.open(image_path)
         img = img.convert("RGB")
-        img.thumbnail((800, 600))
+        img.thumbnail((416,416))
+        img = self.draw_bound(img)
         img.save(TEMP + "\\" + os.path.basename(image_path))
         return TEMP + "\\" + os.path.basename(image_path)
 
