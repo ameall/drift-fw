@@ -7,11 +7,30 @@ import asyncio
 import time
 from mavsdk import System
 from mavsdk.offboard import (OffboardError, VelocityBodyYawspeed)
+from typing import Final
 
 from drone_controller import DroneController
 from log import logger
 from pixel_displacement_simulator import CameraAppSimulator
 from server import UnixSocketServer
+
+
+VELOCITY_INCREMENT: Final[float] = 0.25
+UPWARD_VELOCITY_OFFSET: Final[float] = -0.2
+VELOCITY_RAMP_SLEEP: Final[float] = 0.0025
+
+def ramp_velocity(current_velocity, updated_velocity):
+    if (updated_velocity > current_velocity):
+        while (updated_velocity - current_velocity > VELOCITY_INCREMENT):
+            current_velocity = current_velocity + VELOCITY_INCREMENT
+            return current_velocity
+    if (updated_velocity < current_velocity):
+        while (updated_velocity - current_velocity < VELOCITY_INCREMENT):
+            current_velocity = current_velocity - VELOCITY_INCREMENT
+            return current_velocity
+
+def velocity_needs_ramping(current_velocity, updated_velocity):
+    return abs(updated_velocity - current_velocity) > VELOCITY_INCREMENT
 
 
 async def run():
@@ -78,21 +97,30 @@ async def run():
     await asyncio.sleep(3)
 
     x_velocity = 0
+    y_velocity = 0
+    z_velocity = 0
     while True:
         server.accept_client()
         x, y, area = server.extract_values_from_message()
-        right, fwd, up = controller.compute_velocity(area, x, y)
-        logger.info(f"Setting velocity fwd: {fwd}, up: {up}, right: {right}")
-        if (x_velocity - right > 0):
-            while (x_velocity - right > 0):
-                x_velocity = x_velocity - 0.2
-                await drone.offboard.set_velocity_body(VelocityBodyYawspeed(fwd, x_velocity, -0.05, 0))
-                time.sleep(0.05)
-        if (x_velocity - right < 0):
-            while (x_velocity - right < 0):
-                x_velocity = x_velocity + 0.2
-                await drone.offboard.set_velocity_body(VelocityBodyYawspeed(fwd, x_velocity, -0.05, 0))
-                time.sleep(0.05)
+        updated_x_velocity, updated_y_velocity, updated_z_velocity = controller.compute_velocity(area, x, y)
+        logger.info(f"Setting velocity fwd: {updated_y_velocity}, up: {updated_z_velocity}, right: {updated_x_velocity}")
+
+        while (velocity_needs_ramping(x_velocity, updated_x_velocity) or velocity_needs_ramping(y_velocity, updated_y_velocity) or velocity_needs_ramping(z_velocity, updated_z_velocity)) :
+            if velocity_needs_ramping(x_velocity, updated_x_velocity):
+                x_velocity = ramp_velocity(x_velocity, updated_x_velocity)
+            if velocity_needs_ramping(y_velocity, updated_y_velocity):
+                y_velocity = ramp_velocity(y_velocity, updated_y_velocity)
+            if velocity_needs_ramping(z_velocity, updated_z_velocity):
+                z_velocity = ramp_velocity(z_velocity, updated_z_velocity)
+            await drone.offboard.set_velocity_body(VelocityBodyYawspeed(y_velocity, x_velocity, UPWARD_VELOCITY_OFFSET, 0))
+            time.sleep(VELOCITY_RAMP_SLEEP)
+
+        x_velocity = updated_x_velocity
+        y_velocity = updated_y_velocity
+        z_velocity = updated_z_velocity
+        await drone.offboard.set_velocity_body(VelocityBodyYawspeed(y_velocity, x_velocity, UPWARD_VELOCITY_OFFSET, 0))
+        time.sleep(VELOCITY_RAMP_SLEEP)
+
 
     logger.info("-- Stopping offboard")
     try:
