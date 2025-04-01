@@ -4,35 +4,62 @@
  *      processing
  */
 
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <string>
 #include <sys/socket.h>
-
 #include "logging.hpp"
 #include "model.hpp"
 
 static bool box_selected = false;
 static std::vector<detection> detected_boxes;
 static detection selected_box;
+static int32_t frame_number = 0;
 
-/**
- * @brief Checks if a click is inside any bounding box
- *
- * @param event 
- * @param click_x 
- * @param click_y 
- * @param flags 
- * @param param 
- */
-static void mouse_callback(int32_t event, int32_t click_x, int32_t click_y, int32_t flags, void* param) {
-    if (event == cv::EVENT_LBUTTONDOWN) {
-        for (const auto& box : detected_boxes) {
-            if (box.box.contains(cv::Point(click_x, click_y))) {
-                selected_box = box;
-                box_selected = true;
-                return;
-            }
-        }
+const std::string jpg_basename = "frame_";
+const std::string DETECTIONS_FILE_NAME = "detections.csv";
+const std::string FORWARD_SLASH = "/";
+const std::string DEFAULT_OUTPUT_DIR = "./";
+const std::string IMAGES_DIR = "images";
+
+static inline bool check_if_directory_exists(const std::string &path)
+{
+    if (!std::filesystem::exists(path)) { 
+        return std::filesystem::create_directories(path) ? true : false;
+    } else {
+        return true;
     }
 }
+
+static std::string get_output_path(const std::string &dir_name, const std::string &file_name = "") {
+    const char* xdg_cache_home = std::getenv("XDG_CACHE_HOME");
+
+    if (xdg_cache_home && *xdg_cache_home) {
+        std::string output_dir = std::string(xdg_cache_home) + FORWARD_SLASH + dir_name;
+        if (!check_if_directory_exists(output_dir)) {
+            log_message(ERROR, "get_image_output_path(): Directory to save images to does not exist");
+        }
+
+        if (file_name != "") {
+            return output_dir + FORWARD_SLASH + file_name;
+        }
+        return output_dir + FORWARD_SLASH;
+    } else {
+        std::string output_dir = DEFAULT_OUTPUT_DIR + dir_name;
+        if (!check_if_directory_exists(output_dir)) {
+            log_message(ERROR, "get_image_output_path(): Directory to save images to does not exist");
+        }
+
+        if (file_name != "") {
+            return output_dir + FORWARD_SLASH + file_name;
+        }
+        return output_dir + FORWARD_SLASH;
+    }
+}
+
+std::ofstream detections_file(get_output_path("", DETECTIONS_FILE_NAME).c_str());
 
 constexpr float CONFIDENCE_THRESHOLD = 0.6;
 constexpr float NMS_THRESHOLD = 0.4;
@@ -48,7 +75,6 @@ constexpr uint8_t ESCAPE_KEY_CODE = 27u;
 Model::Model() : next_id(0), message_id(0)
 {
     configure_model();
-
     socket.initialize_socket();
 }
 
@@ -69,18 +95,17 @@ void Model::configure_model()
 
 void Model::process_frame(cv::Mat frame)
 {
-    //cv::setMouseCallback("Frame", mouse_callback, nullptr);
-
-    //cv::imshow("Frame", frame);
     cv::resize(frame, frame, cv::Size(MODEL_PIXEL_WIDTH, MODEL_PIXEL_HEIGHT));  // YOLOv3 typically uses 416x416 input size
+    cv::imwrite((get_output_path(IMAGES_DIR) + FORWARD_SLASH + jpg_basename + std::to_string(frame_number) + ".jpg").c_str(), frame);
     blob = cv::dnn::blobFromImage(frame, 1/255.0, cv::Size(MODEL_PIXEL_WIDTH, MODEL_PIXEL_HEIGHT), cv::Scalar(0, 0, 0), true, false);
     net.setInput(blob);
     net.forward(outputs, net.getUnconnectedOutLayersNames());
 
     detected_boxes = process_outputs(frame, outputs, class_values);
 
-    // draw_bounding_boxes(frame, detected_boxes, class_names, class_values);
-    // cv::imshow("Frame", frame);
+    draw_bounding_boxes(frame, detected_boxes, class_names, class_values);
+
+    frame_number++;
 }
 
 bool Model::end_processing() const
@@ -153,7 +178,12 @@ void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &ou
                     int16_t delta_x = center_x - MODEL_PIXEL_CENTER_X;
                     int16_t delta_y = center_y - MODEL_PIXEL_CENTER_Y;
 
+<<<<<<< HEAD
                     log_message(INFO, "Model::extract_outputs(): Results: Confidence: %f, Area: %d, X Delta: %d, Y Delta: %d", confidence, area, delta_x, delta_y);
+=======
+                    log_message(INFO, "Model::extract_outputs(): Results: Area: %d, X Delta: %d, Y Delta: %d", area, delta_x, delta_y);
+                    detections_file << std::to_string(frame_number) << "," << left << "," << top << "," << width << "," << height << std::endl;
+>>>>>>> c2f2386 (Issue 53: Save Camera Frames and Detections (#53))
                     send_results(width * height, delta_x, delta_y);
                     return;
                 }

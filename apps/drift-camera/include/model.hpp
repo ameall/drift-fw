@@ -1,7 +1,6 @@
 /**
  * @file model.hpp
- * @brief Defines the CV model class that will be used for camera image
- *      processing
+ * @brief Model class declaration
  */
 
 #pragma once
@@ -45,7 +44,14 @@ struct detection {
 class Model {
   public:
     explicit Model();
+
     ~Model() = default;
+
+    // Deleting copy and move constructors
+    Model(const Model&) = delete;
+    Model& operator=(const Model&) = delete;
+    Model(Model&&) = delete;
+    Model& operator=(Model&&) = delete;
 
     /**
      * @brief Configures the CV model based on a provided .onnx file, or .cfg/
@@ -78,6 +84,9 @@ class Model {
      */
     bool end_processing() const;
 
+    /**
+     * @brief Test function to allow us to run the model on a saved .mp4 video
+     */
     void process_mp4(const std::string);
 
     // Function to process network outputs and return the bounding boxes after NMS
@@ -129,7 +138,7 @@ class Model {
     std::map<int32_t, detection> new_tracked_boxes;
     int32_t next_id;
 
-    // Results senidng objects
+    // Results sending objects
     SocketManager socket;
     OutputsMessage message;
     int32_t message_id;

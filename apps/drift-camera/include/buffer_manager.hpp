@@ -1,6 +1,6 @@
 /**
  * @file buffer_manager.hpp
- * @brief 
+ * @brief BufferManager class declaration
  */
 
 #include <cstdint>
@@ -8,8 +8,23 @@
 
 #include <unordered_map>
 
+/**
+ * @class BufferManager
+ * @brief Abstracts management of the buffers used to store images captured
+ *      from the camera
+ */
 class BufferManager {
   public:
+    BufferManager() = default;
+
+    ~BufferManager() = default;
+
+    // Deleting copy and move constructors
+    BufferManager(const BufferManager&) = delete;
+    BufferManager& operator=(const BufferManager&) = delete;
+    BufferManager(BufferManager&&) = delete;
+    BufferManager& operator=(BufferManager&&) = delete;
+
     /**
      * @brief Maps buffers to file descriptors and stored them in a map so that
      *      they don't have to be remapped on each use
@@ -26,6 +41,9 @@ class BufferManager {
      */
     uint8_t* get_buffer(libcamera::FrameBuffer *buffer) const noexcept;
 
+    /**
+     * @brief Clears all buffer mappings
+     */
     void unmap_all();
 
   private:

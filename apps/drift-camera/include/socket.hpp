@@ -1,7 +1,6 @@
 /**
  * @file socket.hpp
- * @brief Socket manager for sending a structured message from this camera app
- *      to the flight control app
+ * @brief SocketManager class declaration
  */
 
 #pragma once
@@ -15,6 +14,11 @@
 
 const std::string DEFAULT_SOCKET_NAME = "DRIFT.sock";
 
+/**
+ * @class SocketManager
+ * @brief Manages the UNIX socket for sending extracted detection info from the
+ *      camera application to the flight control application
+ */
 class SocketManager {
   public:
     /**
@@ -29,6 +33,12 @@ class SocketManager {
      *      scope
      */
     ~SocketManager();
+
+    // Deleting copy and move constructors
+    SocketManager(const SocketManager&) = delete;
+    SocketManager& operator=(const SocketManager&) = delete;
+    SocketManager(SocketManager&&) = delete;
+    SocketManager& operator=(SocketManager&&) = delete;
 
     /**
      * @brief Creates the actual socket and connects to the server
@@ -54,8 +64,6 @@ class SocketManager {
 
   private:
     int32_t socket_fd;
-
     std::string socket_path;
-
     struct sockaddr_un socket_address;
 };
