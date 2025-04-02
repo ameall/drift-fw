@@ -9,10 +9,11 @@ from mavsdk import System
 from mavsdk.offboard import (OffboardError, VelocityBodyYawspeed)
 from typing import Final
 
+from deployment import GPSDeploy
 from drone_controller import DroneController
 from log import logger
 from pixel_displacement_simulator import CameraAppSimulator
-from server import UnixSocketServer
+from server import CAMEAR_SOCKET_NAME, CAMERA_SOCKET_NAME, LIDAR_SOCKET_NAME, UnixSocketServer
 
 
 VELOCITY_INCREMENT: Final[float] = 0.25
@@ -37,11 +38,11 @@ async def run():
     """ Does Offboard control using velocity body coordinates. """
     # ======= Camera App Simulator ======= #
     # controller = DroneController()
-    # server = UnixSocketServer()
-    # server.start_server()
+    # camera_server = UnixSocketServer()
+    # camera_server.start_server()
     # while True:
-    #     server.accept_client()
-    #     x, y, area = server.extract_values_from_message()
+    #     camera_server.accept_client()
+    #     x, y, area = camera_server.extract_values_from_message()
     #     fwd, up, right = controller.compute_velocity(area, x, y)
     #     logger.info("");
     #     logger.info(f"Velocity fwd: {fwd}, up: {up}, right: {right}")
@@ -50,8 +51,10 @@ async def run():
     # ======= Main Flight Loop ======= #
     drone = System()
     controller = DroneController()
-    server = UnixSocketServer()
-    server.start_server()
+    camera_server = UnixSocketServer(CAMERA_SOCKET_NAME)
+    camera_server.start_server()
+    lidar_server = UnixSocketServer(LIDAR_SOCKET_NAME)
+    lidar_server.start_server()
     simulator = CameraAppSimulator()
     # Use system address serial port for actual drone
     await drone.connect("serial:///dev/ttyAMA0:921600")
@@ -96,12 +99,23 @@ async def run():
     await drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
     await asyncio.sleep(3)
 
+    lidar_server.accept_client()
+    gps_deployer = GPSDeploy()
+    while (True):
+        lidar_server.send_message_to_client()
+        front_distance, back_distance = lidar_server.extract_values_from_lidar_message()
+        if (back_distance < 20 and not back_distance == 0):
+            gps_deployer.setup_servos()
+            gps_deployer.drop_payload()
+            break
+
     x_velocity = 0
     y_velocity = 0
     z_velocity = 0
-    while True:
-        server.accept_client()
-        x, y, area = server.extract_values_from_message()
+    frames_in_deadzone = 0
+    while (frames_in_deadzone > 10):
+        camera_server.accept_client()
+        x, y, area = camera_server.extract_values_from_message()
         updated_x_velocity, updated_y_velocity, updated_z_velocity = controller.compute_velocity(area, x, y)
         logger.info(f"Setting velocity fwd: {updated_y_velocity}, up: {updated_z_velocity}, right: {updated_x_velocity}")
 
@@ -135,14 +149,14 @@ async def run():
 if __name__ == "__main__":
     # ======= Camera App Simulator ======= #
     # controller = DroneController()
-    # server = UnixSocketServer()
-    # server.start_server()
-    # server.accept_client()
+    # camera_server = UnixSocketServer()
+    # camera_server.start_server()
+    # camera_server.accept_client()
 
     # while True:
-    #     x, y, area = server.extract_values_from_message()
+    #     x, y, area = camera_server.extract_values_from_message()
     #     if x == -1 and y == -1 and area == -1:
-    #         server.accept_client()
+    #         camera_server.accept_client()
     #         continue
     #     fwd, up, right, _ = controller.compute_velocity(area,y,x)
     #     logger.info(f"Velocity fwd: {fwd} up: {up}, right {right}")

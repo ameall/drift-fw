@@ -26,7 +26,7 @@ class LidarMessage {
      * @param message_id Unique identifier for each message
      * @param distance LiDAR distance reading
      */
-    void create_message(const int32_t message_id, const uint16_t distance);
+    void create_message(const int32_t message_id, const uint16_t front_lidar_distance, const uint16_t down_lidar_distance);
 
     /**
      * @brief Clears the json message and resets the valid flag

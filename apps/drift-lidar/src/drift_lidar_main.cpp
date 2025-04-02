@@ -5,6 +5,7 @@
 
 #include "lidar.hpp"
 #include "logging.hpp"
+#include "message.hpp"
 #include "socket.hpp"
 
 /**
@@ -16,10 +17,13 @@ int main()
 {
     log_message(INFO, "main(): Starting drift-lidar application");
 
-    const std::string serial_port_name = "/dev/ttyAMA0";
-    Lidar lidar = Lidar(serial_port_name);
+    const std::string front_lidar_port_name = "/dev/ttyAMA2";
+    Lidar front_lidar = Lidar(front_lidar_port_name);
 
-    if (!lidar.open_serial()) {
+    const std::string down_lidar_port_name = "/dev/ttyAMA3";
+    Lidar down_lidar = Lidar(down_lidar_port_name);
+
+    if (!(front_lidar.open_serial() && down_lidar.open_serial())) {
         return -1;
     }
 
@@ -28,11 +32,18 @@ int main()
         return -1;
     }
 
+    LidarMessage message;
+    int32_t message_id = 0;
     while (1) {
-        // Add logic to allow flight control app to tell camera app to stop
+        socket.read_message();
+        log_message(INFO, "Received message from server");
+        message.create_message(message_id, front_lidar.get_distance(), down_lidar.get_distance());
+        socket.send_message(message);
+        message_id++;
     }
 
-    lidar.close_serial();
+    front_lidar.close_serial();
+    down_lidar.close_serial();
 
     return 0;
 }
