@@ -23,18 +23,18 @@ void OutputsMessage::create_message(const int32_t message_id, const int32_t dete
     message_valid = true;
 }
 
-void OutputsMessage::clear_message()
+void OutputsMessage::clear_message() noexcept
 {
     message.clear();
     message_valid = false;
 }
 
-std::string OutputsMessage::get_message_as_string() const
+std::string OutputsMessage::get_message_as_string() const noexcept
 {
     return message.dump();
 }
 
-bool OutputsMessage::is_message_valid() const
+bool OutputsMessage::is_message_valid() const noexcept
 {
     return message_valid;
 }

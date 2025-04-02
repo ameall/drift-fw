@@ -21,14 +21,12 @@ static const std::string BUS = "bus";
 static const std::string TRUCK = "truck";
 
 static const std::unordered_map<std::string, uint8_t> class_map = {
-    { PERSON, 0u },
     { CAR, 2u },
-    { BUS, 5u },
-    { TRUCK, 7u }
+    { TRUCK, 7u}
 };
 
-const std::vector<std::string> class_names = { PERSON, CAR, BUS, TRUCK };
-const std::vector<int32_t> class_values = { class_map.at(PERSON), class_map.at(CAR), class_map.at(BUS), class_map.at(TRUCK) };
+const std::vector<std::string> class_names = { CAR, TRUCK };
+const std::vector<int32_t> class_values = { class_map.at(CAR), class_map.at(TRUCK) };
 
 struct detection {
     int32_t class_id;

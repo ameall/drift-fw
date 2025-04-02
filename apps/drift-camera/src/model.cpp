@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <istream>
 #include <string>
 #include <sys/socket.h>
 #include "logging.hpp"
@@ -61,13 +62,13 @@ static std::string get_output_path(const std::string &dir_name, const std::strin
 
 std::ofstream detections_file(get_output_path("", DETECTIONS_FILE_NAME).c_str());
 
-constexpr float CONFIDENCE_THRESHOLD = 0.6;
+constexpr float CONFIDENCE_THRESHOLD = 0.4;
 constexpr float NMS_THRESHOLD = 0.4;
 
 constexpr int16_t MODEL_PIXEL_WIDTH = 416;
 constexpr int16_t MODEL_PIXEL_HEIGHT = MODEL_PIXEL_WIDTH;
 constexpr int16_t MODEL_PIXEL_CENTER_X = MODEL_PIXEL_WIDTH / 2;
-constexpr int16_t MODEL_PIXEL_CENTER_Y = MODEL_PIXEL_HEIGHT / 2;
+constexpr int16_t MODEL_PIXEL_CENTER_Y = MODEL_PIXEL_HEIGHT;
 
 constexpr uint32_t WAITKEY_DELAY = 10u;
 constexpr uint8_t ESCAPE_KEY_CODE = 27u;
@@ -152,6 +153,13 @@ void Model::process_mp4(const std::string video_path)
     }
 }
 
+constexpr int16_t DEADZONE_START = 420;
+constexpr int16_t DEADZONE_HEIGHT = 400;
+constexpr int16_t ZONE_ONE_HEIGHT = 370;
+constexpr int16_t ZONE_TWO_HEIGHT = 340;
+constexpr int16_t ZONE_THREE_HEIGHT = 320;
+constexpr int16_t ZONE_FINAL_HEIGHT = 0;
+
 void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &outputs, const std::vector<int32_t> &class_values)
 {
     for (size_t i = 0; i < outputs.size(); ++i) {
@@ -176,15 +184,25 @@ void Model::extract_outputs(const cv::Mat &frame, const std::vector<cv::Mat> &ou
 
                     int32_t area = width * height;
                     int16_t delta_x = center_x - MODEL_PIXEL_CENTER_X;
-                    int16_t delta_y = center_y - MODEL_PIXEL_CENTER_Y;
+                    // int16_t delta_y = (center_y - MODEL_PIXEL_CENTER_Y) / 20;
+                    int16_t y_zone = 0;
+                    if (center_y <= DEADZONE_START && center_y >= DEADZONE_HEIGHT) {
+                        y_zone = 0;
+                    } else if (center_y < DEADZONE_HEIGHT && center_y >= ZONE_ONE_HEIGHT) {
+                        y_zone = 1;
+                    } else if (center_y < ZONE_ONE_HEIGHT && center_y >= ZONE_TWO_HEIGHT) {
+                        y_zone = 2;
+                    } else if (center_y < ZONE_TWO_HEIGHT && center_y >= ZONE_THREE_HEIGHT) {
+                        y_zone = 3;
+                    } else if (center_y < ZONE_THREE_HEIGHT && center_y >= ZONE_FINAL_HEIGHT) {
+                        y_zone = 4;
+                    } else {
+                        y_zone = 0;
+                    }
 
-<<<<<<< HEAD
-                    log_message(INFO, "Model::extract_outputs(): Results: Confidence: %f, Area: %d, X Delta: %d, Y Delta: %d", confidence, area, delta_x, delta_y);
-=======
-                    log_message(INFO, "Model::extract_outputs(): Results: Area: %d, X Delta: %d, Y Delta: %d", area, delta_x, delta_y);
+                    log_message(INFO, "Model::extract_outputs(): Results: Confidence: %f, Area: %d, X Delta: %d, Y Delta: %d", confidence, area, delta_x, y_zone);
                     detections_file << std::to_string(frame_number) << "," << left << "," << top << "," << width << "," << height << std::endl;
->>>>>>> c2f2386 (Issue 53: Save Camera Frames and Detections (#53))
-                    send_results(width * height, delta_x, delta_y);
+                    send_results(width * height, delta_x, y_zone);
                     return;
                 }
             }
