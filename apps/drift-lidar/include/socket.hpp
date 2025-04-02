@@ -13,7 +13,7 @@
 
 #include "message.hpp"
 
-const std::string DEFAULT_SOCKET_NAME = "DRIFT.sock";
+const std::string DEFAULT_SOCKET_NAME = "LIDAR.sock";
 
 class SocketManager {
   public:
@@ -44,6 +44,8 @@ class SocketManager {
      * @return true if the message is able to be sent; false otherwise 
      */
     bool send_message(LidarMessage &message);
+
+    bool read_message();
 
     /**
      * @brief Closes the socket, if it is open

@@ -78,6 +78,25 @@ bool SocketManager::send_message(LidarMessage &message)
     return true;
 }
 
+constexpr int32_t BUFFER_SIZE = 20;
+
+bool SocketManager::read_message()
+{
+    if (socket_fd == -1) {
+        log_message(ERROR, "SocketManager::read_message(): Socket not open, could not read message");
+        return false;
+    }
+
+    char buffer[BUFFER_SIZE] = {0};
+    int bytes_read = read(socket_fd, buffer, BUFFER_SIZE);
+    if (bytes_read > 0) {
+        log_message(INFO, "Received message: %s", buffer);
+        return true;
+    }
+
+    return false;
+}
+
 bool SocketManager::close_socket()
 {
     if (socket_fd == -1) {

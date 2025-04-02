@@ -9,14 +9,16 @@
 #include "message.hpp"
 
 const std::string MESSAGE_ID_FIELD_NAME = "id";
-const std::string DISTANCE_FIELD_NAME = "distance";
+const std::string FRONT_DISTANCE_FIELD_NAME = "front_lidar_distance";
+const std::string DOWN_DISTANCE_FIELD_NAME = "down_lidar_distance";
 
 LidarMessage::LidarMessage() : message_valid(false) {}
 
-void LidarMessage::create_message(const int32_t message_id, const uint16_t distance)
+void LidarMessage::create_message(const int32_t message_id, const uint16_t front_lidar_distance, const uint16_t down_lidar_distance)
 {
     message[MESSAGE_ID_FIELD_NAME] = message_id;
-    message[DISTANCE_FIELD_NAME] = distance;
+    message[FRONT_DISTANCE_FIELD_NAME] = front_lidar_distance;
+    message[DOWN_DISTANCE_FIELD_NAME] = down_lidar_distance;
     message_valid = true;
 }
 

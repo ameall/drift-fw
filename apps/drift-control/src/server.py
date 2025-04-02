@@ -11,7 +11,9 @@ from typing import Dict, Final, Optional, Tuple
 
 from log import logger
 
-DEFAULT_SOCKET_NAME: Final[str] = "DRIFT.sock"
+DEFAULT_SOCKET_NAME: Final[str] = ""
+CAMERA_SOCKET_NAME: Final[str] = "DRIFT.sock"
+LIDAR_SOCKET_NAME: Final[str] = "LIDAR.sock"
 DEFAULT_SOCKET_DIR: Final[str] = "/run/"
 
 OUTPUT_MESSAGE_SIZE: Final[int] = 10000
@@ -21,6 +23,9 @@ MESSAGE_ID_FIELD_NAME: Final[str] = "id";
 DETECTION_AREA_FIELD_NAME: Final[str] = "det_area";
 DELTA_X_FIELD_NAME: Final[str] = "x_off";
 DELTA_Y_FIELD_NAME: Final[str] = "y_off";
+
+FRONT_LIDAR_DISTANCE_FIELD_NAME: Final[str] = "front_lidar_distance"
+DOWN_LIDAR_DISTANCE_FIELD_NAME: Final[str] = "down_lidar_distance"
 
 
 class UnixSocketServer:
@@ -110,6 +115,20 @@ class UnixSocketServer:
         return message[DELTA_X_FIELD_NAME], message[DELTA_Y_FIELD_NAME], message[DETECTION_AREA_FIELD_NAME]
 
 
+    def extract_values_from_lidar_message(self) -> Tuple[int, int]:
+        message = self.get_message_from_client()
+        if not message:
+            logger.info("UnixSocketServer::extract_values_from_message(): Client disconnected, no message")
+            return -1, -1
+
+        return message[FRONT_LIDAR_DISTANCE_FIELD_NAME], message[DOWN_LIDAR_DISTANCE_FIELD_NAME]
+
+
+    def send_message_to_client(self) -> None:
+        message = "SEND"
+        self.client_connection.sendall(message.encode())
+
+
     def stop(self) -> None:
         """ Stop the server and clean up the socket file """
         if self.server_socket:
@@ -120,14 +139,14 @@ class UnixSocketServer:
 
 
 if __name__ == "__main__":
-    server = UnixSocketServer()
+    server = UnixSocketServer(LIDAR_SOCKET_NAME)
     try:
         server.start_server()
         while True:
             server.accept_client()
             while True:
-                server.get_message_from_client()
-                server.extract_values_from_message()
+                server.send_message_to_client()
+                server.extract_values_from_lidar_message()
     except KeyboardInterrupt:
         logger.info("main(): Server is shutting down")
     finally:
