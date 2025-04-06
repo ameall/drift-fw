@@ -7,6 +7,7 @@
 #include "logging.hpp"
 #include "message.hpp"
 #include "socket.hpp"
+#include <unistd.h>
 
 /**
  * @brief Main program loop for drift-lidar application
